@@ -19,41 +19,100 @@ import AdminOrganizerRequestsPage from './pages/AdminOrganizerRequestsPage';
 import BookingDetailsPage from './pages/BookingDetailsPage';
 import NearbyEventsPage from './pages/NearbyEventsPage';
 import { EventDetailsPage } from './pages/EventDetailsPage';
+import { env } from './config/environment';
+import { AuthProvider } from './components/auth/AuthProvider';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import UnauthorizedPage from './pages/unauthorizedPage';
+import NotFoundPage from './pages/NotFoundPage';
 
 function App() {
   return (
     <Router>
-      <div className="min-h-screen flex flex-col bg-gradient-to-br from-primary-50 to-primary-100">
-        <Header />
-        <Container className="flex-1 py-8">
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<HomePage />} />
-            <Route path="/events" element={<EventsPage />} />
-            <Route path="/events/:id" element={<EventDetailsPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/organizer-request" element={<OrganizerRequestPage />} />
-            <Route path="/nearby-events" element={<NearbyEventsPage />} />
+      <AuthProvider>
+        <div className="min-h-screen flex flex-col bg-gradient-to-br from-primary-50 to-primary-100">
+          <Header />
+          <Container className="flex-1 py-8">
+            <Routes>
+              {/* 🌐 PUBLIC ROUTES - Match backend public endpoints */}
+              <Route path="/" element={<HomePage />} />
+              <Route path="/events" element={<EventsPage />} />
+              <Route path="/events/:id" element={<EventDetailsPage />} />
+              <Route path="/nearby-events" element={<NearbyEventsPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
 
-            {/* User Routes */}
-            <Route path="/dashboard" element={<UserDashboard />} />
-            <Route path="/booking/:id" element={<BookingDetailsPage />} />
+              {/* 🔐 AUTHENTICATION REQUIRED ROUTES */}
 
-            {/* Organizer Routes */}
-            <Route path="/organizer/dashboard" element={<OrganizerDashboard />} />
-            <Route path="/create-event" element={<CreateEventPage />} />
-            <Route path="/organizer/requests" element={<OrganizerRequestsPage />} />
+              {/* Any authenticated user can access these */}
+              <Route path="/dashboard" element={
+                <ProtectedRoute >
+                  <UserDashboard />
+                </ProtectedRoute>
+              } />
 
-            {/* Admin Routes */}
-            <Route path="/admin" element={<AdminDashboardPage />} />
-            <Route path="/admin/users" element={<AdminUsersPage />} />
-            <Route path="/admin/events" element={<AdminEventsPage />} />
-            <Route path="/admin/organizer-requests" element={<AdminOrganizerRequestsPage />} />
-          </Routes>
-        </Container>
-        <Footer />
-      </div>
+              {/* 🎯 ROLE-BASED PROTECTED ROUTES */}
+
+              {/* USER role only - Create organizer requests */}
+              <Route path="/organizer-request" element={
+                <ProtectedRoute requiredRole="USER">
+                  <OrganizerRequestPage />
+                </ProtectedRoute>
+              } />
+
+              {/* Any authenticated user can view their bookings */}
+              <Route path="/booking/:id" element={
+                <ProtectedRoute >
+                  <BookingDetailsPage />
+                </ProtectedRoute>
+              } />
+
+              {/* 👤 ORGANIZER + ADMIN ROUTES - Event Management */}
+              <Route path="/organizer/dashboard" element={
+                <ProtectedRoute requiredRole={["ORGANIZER", "ADMIN"]}>
+                  <OrganizerDashboard />
+                </ProtectedRoute>
+              } />
+
+              <Route path="/create-event" element={
+                <ProtectedRoute requiredRole={["ORGANIZER", "ADMIN"]}>
+                  <CreateEventPage />
+                </ProtectedRoute>
+              } />
+
+              {/* 👑 ADMIN ONLY ROUTES */}
+              <Route path="/admin" element={
+                <ProtectedRoute requiredRole="ADMIN">
+                  <AdminDashboardPage />
+                </ProtectedRoute>
+              } />
+
+              <Route path="/admin/users" element={
+                <ProtectedRoute requiredRole="ADMIN">
+                  <AdminUsersPage />
+                </ProtectedRoute>
+              } />
+
+              <Route path="/admin/events" element={
+                <ProtectedRoute requiredRole="ADMIN">
+                  <AdminEventsPage />
+                </ProtectedRoute>
+              } />
+
+              {/* Admin manages organizer requests */}
+              <Route path="/admin/organizer-requests" element={
+                <ProtectedRoute requiredRole="ADMIN">
+                  <AdminOrganizerRequestsPage />
+                </ProtectedRoute>
+              } />
+
+              {/* 🚨 ERROR PAGES */}
+              <Route path="/unauthorized" element={<UnauthorizedPage />} />
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </Container>
+          <Footer />
+        </div>
+      </AuthProvider>
     </Router>
   );
 }

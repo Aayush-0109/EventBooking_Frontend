@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -8,31 +8,26 @@ import Input from '../components/ui/Input';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import Container from '../components/layout/Container';
 import { User, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { useAuthStore } from '../store/authStore';
+import { message } from 'antd'
+import { useNavigate } from 'react-router-dom';
 
 // Registration form validation schema matching backend exactly
 const registerSchema = z.object({
-    name: z.string()
-        .min(2, "Name must have at least 2 characters")
-        .max(50, "Name cannot exceed 50 characters")
-        .trim(),
-    email: z.string()
-        .email("Invalid email format")
-        .min(1, "Email is required"),
-    password: z.string()
-        .min(8, "Minimum 8 characters")
-        .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-        .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-        .regex(/[0-9]/, "Password must contain at least one number"),
+    name: z.string().min(2).max(50).trim(),
+    email: z.string().email().min(1),
+    password: z.string().min(8).regex(/[A-Z]/).regex(/[a-z]/).regex(/[0-9]/),
     confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
+    termsAccepted: z.boolean().refine(val => val === true, {
+        message: "You must accept the terms and conditions"
+    })
 });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 
 export const RegisterPage: React.FC = () => {
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const navigate = useNavigate()
+    const { registerUser, setLoading, error, clearError, isLoading } = useAuthStore()
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -50,25 +45,31 @@ export const RegisterPage: React.FC = () => {
             confirmPassword: '',
         }
     });
-
+    useEffect(() => {
+        clearError()
+    }, [clearError])
     const handleFormSubmit = async (data: RegisterFormData) => {
-        setIsSubmitting(true);
+
         try {
-            // TODO: Integrate with backend API
-            console.log('Registration data:', data);
+            const result = await registerUser(data.name, data.email, data.password);
+            if (result.success) {
+                message.success(result.message || "Registration successful")
+                clearError()
+                const user = result.user;
+                if (user?.role === "ADMIN") navigate("/admin")
+                else if (user?.role === "ORGANIZER") navigate("organizer/dashboard");
+                else navigate('/dashboard')
+            }
+            else message.error(result.message || "Regustration failed")
 
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 2000));
+        } catch (error: any) {
+            const errorMsg = error.originalError?.response?.data?.message
+                || error.message
+                || "Registration failed";
+            message.error(errorMsg);
 
-            // TODO: Handle successful registration
-            console.log('Registration successful!');
-        } catch (error) {
-            console.error('Registration failed:', error);
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
+        };
+    }
     return (
         <Container>
             <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -82,6 +83,12 @@ export const RegisterPage: React.FC = () => {
                             Join us to discover and book amazing events
                         </p>
                     </div>
+
+                    {error && (
+                        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                            <p className="text-sm text-red-600">{error}</p>
+                        </div>
+                    )}
 
                     {/* Registration Form */}
                     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
@@ -122,7 +129,8 @@ export const RegisterPage: React.FC = () => {
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+                                    aria-label={showPassword ? "Hide password" : "Show password"}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2"
                                 >
                                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                 </button>
@@ -141,7 +149,8 @@ export const RegisterPage: React.FC = () => {
                                 <button
                                     type="button"
                                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+                                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2"
                                 >
                                     {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                 </button>
@@ -184,10 +193,10 @@ export const RegisterPage: React.FC = () => {
                             type="submit"
                             className="w-full"
                             size="lg"
-                            loading={isSubmitting}
-                            disabled={isSubmitting}
+                            loading={isLoading}
+                            disabled={isLoading}
                         >
-                            {isSubmitting ? (
+                            {isLoading ? (
                                 <>
                                     <LoadingSpinner size="sm" />
                                     Creating Account...

@@ -1,75 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import EventCard from '../components/features/EventCard';
-
-const mockEvents = [
-    {
-        id: 1,
-        title: 'Tech Conference 2024',
-        description: 'Join us for the biggest technology conference of the year! This event brings together industry leaders, innovators, and tech enthusiasts for three days of inspiring talks, workshops, and networking opportunities.',
-        date: '2024-08-01T18:00:00Z',
-        images: ['https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=500'],
-        registrations: [],
-        user: {
-            id: 1,
-            name: 'Tech Events Inc',
-            email: 'contact@techevents.com',
-            role: 'ORGANIZER' as const,
-            profileImage: null,
-            createdAt: '2024-01-01T00:00:00Z',
-            updatedAt: '2024-01-01T00:00:00Z'
-        },
-        longitude: -74.0060,
-        latitude: 40.7128,
-        address: '123 Convention Center Blvd',
-        city: 'New York',
-        state: 'NY',
-        country: 'USA',
-        postalCode: '10001',
-        createdBy: 1,
-        createdAt: '2024-01-01T00:00:00Z',
-        updatedAt: '2024-01-01T00:00:00Z',
-    },
-    {
-        id: 2,
-        title: 'Music Festival 2024',
-        description: 'Experience the best live music performances from top artists around the world. A three-day festival featuring rock, pop, electronic, and indie music.',
-        date: '2024-08-05T20:00:00Z',
-        images: ['https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=500'],
-        registrations: [],
-        user: {
-            id: 2,
-            name: 'Music Productions',
-            email: 'info@musicprod.com',
-            role: 'ORGANIZER' as const,
-            profileImage: null,
-            createdAt: '2024-01-01T00:00:00Z',
-            updatedAt: '2024-01-01T00:00:00Z'
-        },
-        longitude: -73.9352,
-        latitude: 40.7589,
-        address: '456 Central Park West',
-        city: 'New York',
-        state: 'NY',
-        country: 'USA',
-        postalCode: '10023',
-        createdBy: 2,
-        createdAt: '2024-01-01T00:00:00Z',
-        updatedAt: '2024-01-01T00:00:00Z',
-    },
-];
-
+import { useAuthStore } from '../store/authStore';
+import { classifyError } from '../utils/errorHandling';
+import { message } from 'antd';
+const events : any = []
 const EventsPage: React.FC = () => {
     const [loading] = useState(false);
-    const [events] = useState(mockEvents);
     const navigate = useNavigate();
-
-    // Simulate loading state
-    // useEffect(() => {
-    //   setLoading(true);
-    //   setTimeout(() => setLoading(false), 1000);
-    // }, []);
+let response;
+    
+    useEffect(() => {
+      ( async ()=>{
+        try {
+            response = await api.get('/events')
+            message.success(response.message);
+        } catch (error) {
+           const classifiedError =  classifyError(error)
+           message.error(classifiedError.message);
+           console.log(classifiedError.technicalMessage)
+        }
+      })()
+    }, []);
 
     return (
         <div className="space-y-6">
@@ -87,7 +40,7 @@ const EventsPage: React.FC = () => {
                 <div>No events found.</div>
             ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {events.map(event => (
+                    {events.map(event : any => (
                         <EventCard key={event.id} event={event} />
                     ))}
                 </div>

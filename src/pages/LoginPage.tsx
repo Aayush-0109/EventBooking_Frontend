@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { email, z } from 'zod';
 import { Link } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import Container from '../components/layout/Container';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
-
+import { message } from 'antd'
+import { useAuthStore } from '../store/authStore';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { classifyError , errorType , getErrorMessage } from '../utils/errorHandling';
 // Login form validation schema matching backend exactly
 const loginSchema = z.object({
     email: z.string()
@@ -24,9 +28,9 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export const LoginPage: React.FC = () => {
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const navigate = useNavigate()
     const [showPassword, setShowPassword] = useState(false);
-
+    const { login, isLoading, error, clearError, isAuthenticated } = useAuthStore();
     const {
         register,
         handleSubmit,
@@ -38,23 +42,37 @@ export const LoginPage: React.FC = () => {
             password: '',
         }
     });
+    useEffect(() => {
+        clearError()
+    }, [clearError]);
 
-    const handleFormSubmit = async (data: LoginFormData) => {
-        setIsSubmitting(true);
-        try {
-            // TODO: Integrate with backend API
-            console.log('Login data:', data);
-
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 2000));
-
-            // TODO: Handle successful login
-            console.log('Login successful!');
-        } catch (error) {
-            console.error('Login failed:', error);
-        } finally {
-            setIsSubmitting(false);
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate('/dashboard')
         }
+    })
+    const handleFormSubmit = async (data: LoginFormData) => {
+        try {
+
+            const result = await login(data.email, data.password);
+
+            message.success(result.message || "Log in successful")
+
+            const user = result.user;
+            if (user?.role === "ADMIN") navigate("/admin")
+            else if (user?.role === "ORGANIZER") navigate("organizer/dashboard");
+            else navigate('/dashboard')
+
+        } catch (error: any) {
+            console.log( "error : ",error)
+            const classifiedError =  classifyError(error);
+           console.log( "classified : ",  classifiedError)
+              console.log('Login Error Details : ',{
+                message : classifiedError.technicalMessage,
+                fields : classifiedError.fielderrors 
+              });
+              message.error(classifiedError.message,10)
+        } 
     };
 
     return (
@@ -73,6 +91,12 @@ export const LoginPage: React.FC = () => {
 
                     {/* Login Form */}
                     <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-8">
+                        {error && (
+                            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+                                <p className="text-sm font-medium">{error}</p>
+                            </div>
+                        )}
+
                         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
                             <Input
                                 label="Email Address"
@@ -125,10 +149,10 @@ export const LoginPage: React.FC = () => {
                                 type="submit"
                                 className="w-full"
                                 size="lg"
-                                loading={isSubmitting}
-                                disabled={isSubmitting}
+                                loading={isLoading}
+                                disabled={isLoading}
                             >
-                                {isSubmitting ? (
+                                {isLoading ? (
                                     <>
                                         <LoadingSpinner size="sm" />
                                         Signing In...
