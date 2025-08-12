@@ -194,3 +194,10 @@ export interface RequestConfig {
     timeout?: number;
     retries?: number;
 }
+export interface PaginationState {
+    currentPage: number
+    totalPages: number
+    totalItems: number
+    hasNext: boolean
+    hasPrev: boolean
+}
