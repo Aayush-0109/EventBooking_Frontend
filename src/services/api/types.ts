@@ -11,78 +11,77 @@ export interface ApiError {
     errors?: Record<string, string[]>;
 }
 export interface User {
-    id : number;
-    name : string;
-    email : string;
-    role : 'USER'| 'ORGANIZER'| 'ADMIN';
-    profileImage : string | null;
+    id: number;
+    name: string;
+    email: string;
+    role: 'USER' | 'ORGANIZER' | 'ADMIN';
+    profileImage: string | null;
 }
-export interface LoginCredentials{
-    email : string;
-    password : string;
+export interface LoginCredentials {
+    email: string;
+    password: string;
 }
 export interface RegisterData {
-    name : string;
-    email : string;
-    password : string;
-    profileImage? : File;
+    name: string;
+    email: string;
+    password: string;
+    profileImage?: File;
 }
-export interface UpdateUserData{
-    name? : string;
-    password? : string;
+export interface UpdateUserData {
+    name?: string;
+    password?: string;
 }
-export interface Event{
+export interface Event {
     id: number;
-    title: string;           
-    description: string;     
-    date: string;            
-    address: string;         
-    city: string;            
-    state: string;           
-    country: string;         
-    postalCode: string;      
-    longitude: number;      
-    latitude: number;       
-    images: string | null;  
-    createdBy: number;      
-    createdAt: string;      
-    updatedAt: string;     
-    
+    title: string;
+    description: string;
+    date: string;
+    address: string;
+    city: string;
+    state: string;
+    country: string;
+    postalCode: string;
+    longitude: number;
+    latitude: number;
+    images: string | string[] | null;
+    createdBy: number;
+    createdAt: string;
+    updatedAt: string;
+    distance?: number
+
     user?: {                 // Creator information
         id: number;
         name: string;
-        email? : string;
-        profileImage?: {
-            url: string;
-        } | null;
+        email?: string;
+        profileImage?: string | null;
     };
 }
 
-export interface CreateEventData{
-    title : string;
-    description : string;
-    date : string;
-    address : string;
-    city : string;
-    state : string;
-    country : string;
-    postalCode : string;
-    longitude : number;
-    latitude : number;
-    images? : File[];
+export interface CreateEventData {
+    title: string;
+    description: string;
+    date: string;
+    address: string;
+    city: string;
+    state: string;
+    country: string;
+    postalCode: string;
+    longitude: number;
+    latitude: number;
+    images?: File[];
 }
 export interface UpdateEventData {
-    title? : string;
-    description? : string;
-    date? : string;
-    address? : string;
-    city? : string;
-    state? : string;
-    country? : string;
-    postalCode? : string;
-    longitude? : number;
-    latitude? : number;
-    images? : File[];
+    title?: string;
+    description?: string;
+    date?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    postalCode?: string;
+    longitude?: number;
+    latitude?: number;
+    images?: File[];
 
 }
 
@@ -97,21 +96,21 @@ export interface EventQuery {
     sortOrder?: 'asc' | 'desc';
 }
 export interface PaginationMeta {
-    total : number;
-    page : number;
-    limit : number;
-    skip : number;
-    totalPages : number;
-    hasNextPage : boolean;
-    hasPrevPage : boolean;
+    total: number;
+    page: number;
+    limit: number;
+    skip: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
 }
 export interface NearbyEventsQuery {
     latitude: number;
     longitude: number;
-    radius?: number;         
-    unit?: 'km' | 'miles';   
-    page?: number;           
-    limit?: number;          
+    radius?: number;
+    unit?: 'km' | 'miles';
+    page?: number;
+    limit?: number;
 }
 export interface EventsResponse {
     events: Event[];
@@ -140,6 +139,7 @@ export interface Registration {
         id: number;
         name: string;
         email: string;
+        profileImage?: string;
     };
     event?: Event;
 }
@@ -149,27 +149,32 @@ export interface RegistrationQuery {
     sortOrder?: 'asc' | 'desc';
 }
 export interface OrganizerRequest {
-    id: number;              // Line 84: @id @default(autoincrement())
-    userId: number;          // Line 85: Int @unique
-    status: 'PENDING' | 'ACCEPTED' | 'REJECTED';  // Line 86: status @default(PENDING) + enum lines 77-81
-    overview: string | null; // Line 87: String? (nullable)
-    resume: string | null;   // Line 88: Json? (transformed to URL in controller)
-    createdAt: string;       // Line 89: DateTime @default(now())
-    updateAt: string;        // Line 90: DateTime @updatedAt (note: typo in schema)
-    
-    // Optional populated fields
-    user?: {                 // Line 92: user relation
+    id: number;
+    userId: number;
+    status: 'PENDING' | 'ACCEPTED' | 'REJECTED';
+    overview: string | null;
+    resume: string | null;
+    createdAt: string;
+    updatedAt: string;
+
+
+    user?: {
         id: number;
         name: string;
         email: string;
+        profileImage?: string;
     };
 }
-export interface CreateOrganizerRequestData{
-    overview : string;
-    resume : File
+export interface UpdateRequestStatusResponse {
+    updatedRequest: OrganizerRequest;
+    updatedUser: User | null; // null if role didn't change
+}
+export interface CreateOrganizerRequestData {
+    overview: string;
+    resume: File
 }
 export interface UpdateRequestStatusData {
-    status : 'ACCEPTED' | 'REJECTED' | 'PENDING'
+    status: 'ACCEPTED' | 'REJECTED' | 'PENDING'
 }
 export interface OrganizerRequestQuery {
     page?: number;

@@ -1,15 +1,12 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import api from "../utils/api"
+import AuthService from '../services/authService'
+import { ApiResponse, User, LoginCredentials, RegisterData, UpdateUserData } from '../services/api/types'
+import { classifyError } from '../utils/errorHandling';
 
 
-interface User {
-    id: number;
-    name: string;
-    email: string;
-    role: 'USER' | 'ORGANIZER' | 'ADMIN';
-    profileImage?: string;
-}
+
+
 
 interface AuthStore {
     // 
@@ -18,23 +15,14 @@ interface AuthStore {
     isLoading: boolean;
     error: string | null;
 
-    login: (email: string, password: string) => Promise<{
-        success: boolean,
-        message: string,
-        user: User | null
-    }>;
-    registerUser: (name: string, email: string, password: string, profileImage?: File) => Promise<{
-        success: boolean,
-        message: string,
-        user: User | null,
-
-
-    }>;
-    logout: () => void;
+    login: (credentials: LoginCredentials) => Promise<void>;
+    registerUser: (userData: RegisterData) => Promise<void>;
+    logout: () => Promise<void>;
     checkAuth: () => Promise<void>;
     refreshToken: () => Promise<boolean>;
-    clearError: () => void;
+    updateprofile: (userData: UpdateUserData) => Promise<void>;
     setLoading: (Loading: boolean) => void;
+    clearError: () => void;
     clearAuth: () => void;
 
 }
@@ -49,122 +37,76 @@ export const useAuthStore = create<AuthStore>()(
                 isLoading: false,
                 // login 
 
-                login: async (email: string, password: string) => {
+                login: async (credentials) => {
                     set({
                         isLoading: true,
                         error: null
                     })
                     try {
-                        const response = await api.post("/auth/login", {
-                            email,
-                            password
-                        })
-                        if (response.data?.success) {
-                            const user = response.data.data;
-                            console.log("Login successfull");
-                            set({
-                                isLoading: false,
-                                isAuthenticated: true,
-                                user: user,
-                                error: null
 
-                            });
-                            return {
-                                success: true,
-                                message: response.data.message,
-                                user: user
-                            }
+                        const response = await AuthService.login(credentials);
+                        if (response.success && response.data) {
+                            set(
+                                {
+                                    user: response.data,
+                                    isAuthenticated: true,
+                                    isLoading: false,
+                                    error: null
+                                }
+                            );
+                            console.log("Login successful");
                         }
-                        return {
-                            success: false,
-                            message: response.data.message || "Login Failed",
-                            user: null
+                        else {
+                            throw new Error(response.message || "Login Failed");
                         }
-
 
                     } catch (error: any) {
-                        console.log("login failed", error);
-                        const errorMessage = error.response?.data?.message || "Login failed"
+                        console.log("Login failed :", error);
+                        const classifiedError = classifyError(error);
                         set({
-                            isLoading: false,
-                            error: errorMessage,
+                            user: null,
                             isAuthenticated: false,
-                            user: null
+                            isLoading: false,
+                            error: classifiedError.message
                         })
-
                         throw error
                     }
 
                 },
-                clearAuth: async () => {
+                registerUser: async (userData) => {
                     set({
-                        user: null,
-                        isAuthenticated: false,
-                        error: null,
-                        isLoading: false
-                    })
-                },
-
-                registerUser: async (name: string, email: string, password: string, profileImage?: File) => {
+                        isLoading: true,
+                        error: null
+                    });
                     try {
-                        set({
-                            isLoading: true,
-                            error: null
-                        });
 
-                        const formData = new FormData();
-                        formData.append('name', name);
-                        formData.append('email', email);
-                        formData.append('password', password);
-                        if (profileImage) {
-                            formData.append('profileImage', profileImage);
+
+                        const response = await AuthService.register(userData);
+                        if (response.success) {
+                            set(
+                                {
+                                    user: response.data,
+                                    isAuthenticated: true,
+                                    isLoading: false,
+                                    error: null
+                                }
+                            );
+                            console.log("registration successful");
                         }
+                        else throw new Error(response.message || "Registration failed")
 
-                        const response = await api.post("/auth/register", formData, {
-                            headers: {
-                                'Content-Type': 'multipart/form-data'
-                            }
-                        });
-
-                        if (response.data.success) {
-                            const user = response.data.data;
-                            set({
-                                user: user,
-                                isAuthenticated: true,
-                                isLoading: false,
-                                error: null
-                            });
-
-                            return {
-                                success: true,
-                                message: response.data.message || 'Registration successful!',
-                                user: user
-                            };
-                        }
-
-                        // Handle unsuccessful response
-                        set({ isLoading: false });
-                        return {
-                            success: false,
-                            message: response.data.message || 'Registration failed',
-                            user: null
-                        };
-                        throw new Error(response.data.message || 'Registration failed');
                     } catch (error: any) {
-                        const errorMessage = error.response?.data?.message || 'Registration failed';
+                        console.log("Registration failed : ", error);
+                        const classifiedError = classifyError(error);
                         set({
-                            isLoading: false,
-                            error: errorMessage,
+                            user: null,
                             isAuthenticated: false,
-                            user: null
-                        });
+                            isLoading: false,
+                            error: classifiedError.message
+                        })
+                        throw error;
 
-                        return {
-                            success: false,
-                            message: errorMessage,
-                            user: null
-                        };
-                        throw error;  
+
                     }
                 },
                 logout: async () => {
@@ -172,36 +114,80 @@ export const useAuthStore = create<AuthStore>()(
                         isLoading: true,
                     })
                     try {
-                        await api.post("/auth/logout");
-                        console.log("Logout successfully")
+                     const response =    await AuthService.logout()
+                        if(response.success){
+                            set({
+                                user : null,
+                                isAuthenticated : false,
+                                isLoading : false,
+                                error : null
+                            });
+                        }
+                        
+
                     } catch (error) {
-                        console.log("Logout error : ", error)
-                    } finally {
-                        set({
-                            isLoading: false,
-                            user: null,
-                            isAuthenticated: false,
-                            error: null
-                        })
+                        console.error('⚠️ Logout API error (continuing with local logout):', error);
+                        const classifiedError = classifyError(error);
+
+
+                        if (classifiedError.type === 'network_error') {
+
+                            set({
+                                isLoading: false,
+                                error: 'Logout failed due to network error. Please try again.',
+
+                            });
+                            throw error;
+
+                        } else if (classifiedError.type === 'authentication_error' || classifiedError.type === 'authorization_error') {
+
+                            console.log('🔐 Auth error during logout - tokens likely expired');
+                            set({
+                                user: null,
+                                isAuthenticated: false,
+                                isLoading: false,
+                                error: null
+                            });
+
+                        } else if (classifiedError.type === 'server_error') {
+
+                            set({
+                                isLoading: false,
+                                error: 'Server error during logout. Please try again or contact support.',
+
+                            });
+                            throw error;
+
+                        } else {
+
+                            set({
+                                isLoading: false,
+                                error: 'Logout failed. Please try again.',
+                            });
+                            throw error;
+                        }
                     }
                 },
                 checkAuth: async () => {
+
                     set({
                         isLoading: true
                     })
                     try {
-                        const response = await api.get("/auth/me");
-                        const user = response.data.data
-                        set({
-                            user,
-                            isAuthenticated: true,
-                            error: null,
-                            isLoading: false
+                        const response = await AuthService.getCurrentUser();
+                        if (response.success) {
+                            set({
+                                user: response.data,
+                                isAuthenticated: true,
+                                error: null,
+                                isLoading: false
+                            })
+                            console.log("Ath check successful");
 
-
-                        })
+                        }
+                        else throw new Error("Authentication check failed")
                     } catch (error) {
-                        console.log("user not authenticated")
+                        console.log('Authentication check failed')
                         set({
                             user: null,
                             isAuthenticated: false,
@@ -212,29 +198,69 @@ export const useAuthStore = create<AuthStore>()(
                     }
                 },
                 refreshToken: async () => {
+
                     try {
-                        console.log("manually refresh token..");
-                        const response = await api.post("/auth/refresh-token");
-                        if (response.data.success && response.data.data) {
-                            const user = response.data.data;
-                            console.log("Token refreshed successfully");
+                        console.log("Refreshing token ")
+                        const response = await AuthService.refreshAccessToken()
+                        if (response.success) {
                             set({
-                                user,
+                                user: response.data,
                                 isAuthenticated: true,
                                 error: null
                             })
-                            return true;
+                            return true
                         }
-                        return false
+                        else {
+                            return false
+                        }
+
                     } catch (error) {
-                        console.log("error in refreshing token ", error)
+                        console.log("Token refresh failed : ", error);
                         set({
                             user: null,
                             isAuthenticated: false,
-                            error: null,
+                            error: null
                         })
                         return false
                     }
+                },
+                updateprofile: async (userData) => {
+                    set({
+                        isLoading: true, error: null
+                    })
+                    try {
+                        const response = await AuthService.updateProfile(userData);
+                        if (response.success) {
+                            set({
+                                user: response.data,
+                                isAuthenticated: true,
+                                isLoading: false,
+                                error: null
+                            })
+                            console.log("Profile Update Successful");
+
+                        }
+                        else {
+                            throw new Error(response.message || "Profile Update Failed")
+                        }
+                    } catch (error) {
+                        const classifiedError = classifyError(error);
+                        set({
+
+                            isLoading: false,
+                            error: classifiedError.message
+                        })
+                        throw error
+                    }
+                },
+
+                clearAuth: async () => {
+                    set({
+                        user: null,
+                        isAuthenticated: false,
+                        error: null,
+                        isLoading: false
+                    })
                 },
                 clearError: () => {
                     set({
