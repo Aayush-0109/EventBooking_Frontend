@@ -1,7 +1,7 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { persist, devtools } from 'zustand/middleware'
 import AuthService from '../services/authService'
-import { ApiResponse, User, LoginCredentials, RegisterData, UpdateUserData } from '../services/api/types'
+import { User, LoginCredentials, RegisterData, UpdateUserData, } from '../services/api/types'
 import { classifyError } from '../utils/errorHandling';
 
 
@@ -29,7 +29,7 @@ interface AuthStore {
 
 export const useAuthStore = create<AuthStore>()(
     persist(
-        (set, get) => (
+        devtools((set, get) => (
             {
                 user: null,
                 isAuthenticated: false,
@@ -114,16 +114,16 @@ export const useAuthStore = create<AuthStore>()(
                         isLoading: true,
                     })
                     try {
-                     const response =    await AuthService.logout()
-                        if(response.success){
+                        const response = await AuthService.logout()
+                        if (response.success) {
                             set({
-                                user : null,
-                                isAuthenticated : false,
-                                isLoading : false,
-                                error : null
+                                user: null,
+                                isAuthenticated: false,
+                                isLoading: false,
+                                error: null
                             });
                         }
-                        
+
 
                     } catch (error) {
                         console.error('⚠️ Logout API error (continuing with local logout):', error);
@@ -271,7 +271,8 @@ export const useAuthStore = create<AuthStore>()(
                     set({ isLoading: Loading })
                 }
             }
-        ),
+        ), { name: 'Auth-Store' })
+        ,
         {
             name: 'auth-storage',
             partialize: (state) => ({

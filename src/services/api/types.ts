@@ -55,6 +55,7 @@ export interface Event {
         email?: string;
         profileImage?: string | null;
     };
+    bookingCount?: number;
 }
 
 export interface CreateEventData {
@@ -89,7 +90,7 @@ export interface EventQuery {
     page?: number;
     limit?: number;
     search?: string;
-    location?: string;       // Backend uses single 'location' field
+    location?: string;       
     startDate?: string;
     endDate?: string;
     sortBy?: 'date' | 'title' | 'createdAt';

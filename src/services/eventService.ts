@@ -62,6 +62,11 @@ class EventService {
         const response = await get<RegistrationsResponse>(`/events/get/bookings/${eventId}`, { params: query });
         return response.data;
     }
-
+    static async getMyEvents(query?: EventQuery): Promise<ApiResponse<EventsResponse>> {
+        const response = await get<EventsResponse>('/events/get/my-events', { params: query });
+        return response.data;
+    }
 }
+
+
 export default EventService

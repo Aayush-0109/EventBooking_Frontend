@@ -1,24 +1,22 @@
-import { ApiResponse, Event, EventQuery, PaginationState, NearbyEventsQuery, EventsResponse, CreateEventData, UpdateEventData, RegistrationQuery, EventService } from "../services/index"
+import { Event, EventQuery, PaginationState, NearbyEventsQuery, CreateEventData, UpdateEventData , EventService } from "../services/index"
 import { create } from 'zustand';
-import { persist, devtools, subscribeWithSelector } from 'zustand/middleware'
+import { persist, devtools } from 'zustand/middleware'
 import { createInitialPaginationState, updatePaginationFromMeta } from "../utils/storeHelpers";
 import { classifyError } from "../utils/errorHandling";
-import { normalizeById, extractIds } from '../utils/storeHelpers'
 import { isDevelopment } from "../config/environment";
 
 
 interface EventStore {
-    eventsById: Record<number, Event>;
-
-    // view
-    allEventIds: number[];
-    nearbyEventIds: number[];
+  currentEvent : Event | null;
+    allEvents: Event[];
+    nearbyEvents: Event[];
     selectedFilters: EventQuery
-
+    myEvents : Event[]
     pagination: {
         allEvents: PaginationState,
         nearbyEvents: PaginationState,
-    }
+        myEvents : PaginationState
+    };
 
     isLoading: boolean,
     isMutating: boolean,
@@ -27,6 +25,7 @@ interface EventStore {
     fetchEvents: (query?: EventQuery) => Promise<void>
     fetchEventById: (id: number) => Promise<void>
     fetchNearbyEvents: (query: NearbyEventsQuery) => Promise<void>
+    fetchMyEvents: (query?: EventQuery) => Promise<void>;
 
     createEvent: (eventData: CreateEventData) => Promise<Event>
     updateEvent: (id: number, eventData: UpdateEventData) => Promise<void>
@@ -37,21 +36,20 @@ interface EventStore {
     clearError: () => void
     clearEvents: () => void
 
-    getEventById: (id: number) => Event | null
-    getAllEvents: () => Event[]
-    getNearbyEvents: () => Event[]
 
 }
 
 const useEventStore = create<EventStore>()(
     persist(
         devtools(
-            (set, get) => ({
+            (set) => ({
 
-                eventsById: {},
-                allEventIds: [],
-                nearbyEventIds: [],
+               currentEvent : null,
+               myEvents:[],
+                allEvents: [],
+                nearbyEvents: [],
                 pagination: {
+                    myEvents: createInitialPaginationState(),
                     allEvents: createInitialPaginationState(),
                     nearbyEvents: createInitialPaginationState(),
                 },
@@ -71,17 +69,10 @@ const useEventStore = create<EventStore>()(
                     try {
                         const response = await EventService.getEvents(query);
                         if (response.success) {
-                            const eventsById = normalizeById<Event>(response.data.events)
-                            const allEventIds = extractIds<Event>(response.data.events)
-
-
+                            
                             set((state) => ({
                                 ...state,
-                                eventsById: {
-                                    ...state.eventsById,
-                                    ...eventsById
-                                },
-                                allEventIds: allEventIds,
+                                allEvents: response.data.events,
 
                                 pagination: {
                                     ...state.pagination,
@@ -93,8 +84,8 @@ const useEventStore = create<EventStore>()(
                         else throw new Error(response.message || "Error while fetching the events")
                     } catch (error) {
                         const classifiedError = classifyError(error);
-                        if(isDevelopment())
-                        console.log(classifiedError);
+                        if (isDevelopment())
+                            console.log(classifiedError);
                         set({
                             isLoading: false,
                             error: classifiedError.message
@@ -103,8 +94,7 @@ const useEventStore = create<EventStore>()(
                     }
                 },
                 fetchEventById: async (id) => {
-                    const existingEvent = get().eventsById[id];
-                    if (existingEvent) return;
+    
 
                     set({ isLoading: true, error: null })
                     try {
@@ -113,20 +103,20 @@ const useEventStore = create<EventStore>()(
                             set((state) => ({
                                 ...state,
                                 isLoading: false,
-                                eventsById: {
-                                    ...state.eventsById,
-                                    [id]: response.data
-                                }
+                                currentEvent : response.data
+                                
                             }))
                         }
                         else throw new Error(response.message)
                     } catch (error) {
                         const classifiedError = classifyError(error);
-                        if(isDevelopment())
-                        console.log(classifiedError);
+                       
+                        if (isDevelopment())
+                            console.log(classifiedError);
                         set({
                             isLoading: false,
-                            error: classifiedError.message
+                            error: classifiedError.message,
+                            currentEvent : null
                         })
                         throw error;
                     }
@@ -139,18 +129,12 @@ const useEventStore = create<EventStore>()(
                     try {
                         const response = await EventService.getNearbyEvents(query);
                         if (response.success) {
-                            const events = response.data.events;
-                            const normalizedEvents = normalizeById<Event>(events);
-                            const eventIds = extractIds<Event>(events);
+                            
                             set((state) => ({
                                 ...state,
                                 isLoading: false,
                                 error: null,
-                                eventsById: {
-                                    ...state.eventsById,
-                                    ...normalizedEvents,
-                                },
-                                nearbyEventIds: eventIds,
+                                nearbyEvents: response.data.events,
                                 pagination: {
                                     ...state.pagination,
                                     nearbyEvents: updatePaginationFromMeta(response.data.meta)
@@ -162,8 +146,8 @@ const useEventStore = create<EventStore>()(
 
                     } catch (error) {
                         const classifiedError = classifyError(error);
-                        if(isDevelopment())
-                        console.log(classifiedError);
+                        if (isDevelopment())
+                            console.log(classifiedError);
                         set({
                             isLoading: false,
                             error: classifiedError.message
@@ -173,7 +157,37 @@ const useEventStore = create<EventStore>()(
 
 
                 },
-
+                fetchMyEvents:async (query) => {
+         set({
+            isLoading : true,
+            error : null
+         })
+         try {
+            const response =await EventService.getMyEvents(query);
+            if(response.success){
+           set((state)=>({
+            ...state,
+            isLoading : false,
+            error : null,
+            myEvents : response.data.events,
+            pagination :{
+                ...state.pagination,
+                myEvents : updatePaginationFromMeta(response.data.meta)
+            }
+           }))
+            }
+            else throw new Error(response.message)
+         } catch (error) {
+            const classifiedError = classifyError(error);
+            if (isDevelopment())
+                console.log(classifiedError);
+            set({
+                isLoading: false,
+                error: classifiedError.message
+            })
+            throw error;
+         }
+                },
                 createEvent: async (eventData) => {
                     set({
                         isMutating: true,
@@ -184,14 +198,15 @@ const useEventStore = create<EventStore>()(
                         if (response.success) {
                             set((state) => ({
                                 ...state,
-                                isMutating: false,
-                                eventsById: {
-                                    ...state.eventsById,
-                                    [response.data.id]: response.data
-                                },
-                                allEventIds: [],
-                                nearbyEventIds: [],
-                                selectedFilters: {}
+                              isMutating : false,
+                              error : null,
+                              myEvents: [],
+                              allEvents : [],
+                              pagination : {
+                                allEvents : createInitialPaginationState(),
+                                nearbyEvents : createInitialPaginationState(),
+                                myEvents : createInitialPaginationState()
+                              }
 
                             }))
                             return response.data
@@ -199,8 +214,8 @@ const useEventStore = create<EventStore>()(
                         else throw new Error(response.message)
                     } catch (error) {
                         const classifiedError = classifyError(error);
-                        if(isDevelopment())
-                        console.log(classifiedError);
+                        if (isDevelopment())
+                            console.log(classifiedError);
                         set({
                             isMutating: false,
                             error: classifiedError.message
@@ -218,22 +233,25 @@ const useEventStore = create<EventStore>()(
                         if (response.success) {
                             set((state) => ({
                                 ...state,
-                                isMutating: false,
-                                eventsById: {
-                                    ...state.eventsById,
-                                    [id]: response.data
-                                },
-                                nearbyEventIds: [],
-                                allEventIds: [],
-                                selectedFilters: {}
+                              isMutating : false,
+                              error : null,
+                              myEvents: [],
+                              allEvents : [],
+                              pagination : {
+                                allEvents : createInitialPaginationState(),
+                                nearbyEvents : createInitialPaginationState(),
+                                myEvents : createInitialPaginationState()
+                              }
+                                
+
                             }))
                             return response.data
                         }
                         else throw new Error(response.message)
                     } catch (error) {
                         const classifiedError = classifyError(error);
-                        if(isDevelopment())
-                        console.log(classifiedError);
+                        if (isDevelopment())
+                            console.log(classifiedError);
                         set({
                             isMutating: false,
                             error: classifiedError.message
@@ -249,20 +267,22 @@ const useEventStore = create<EventStore>()(
                     try {
                         const response = await EventService.deleteEvent(id);
                         if (response.success) {
-                            const { [id]: deletedEvent, ...remainingEvents } = get().eventsById
+                           
                             set((state) => ({
-                                eventsById: remainingEvents,
-                                allEventIds: state.allEventIds.filter((x) => x !== id),
-                                nearbyEventIds: state.nearbyEventIds.filter((x) => x !== id),
+                                ...state,
+                                allEvents : state.allEvents.filter((event)=>(event.id!==id)),
+                                nearbyEvents : state.nearbyEvents.filter((event)=>(event.id!==id)),
+                                myEvents : state.myEvents.filter((event)=>(event.id!==id)),
+                               
                                 isMutating: false
                             }))
                         }
                         else throw new Error(response.message)
                     } catch (error) {
                         const classifiedError = classifyError(error)
-                        if(isDevelopment())
+                        if (isDevelopment())
                             console.log(classifiedError);
-                            
+
                         set({
                             isMutating: false,
                             error: classifiedError.message
@@ -285,7 +305,7 @@ const useEventStore = create<EventStore>()(
                         }
                     } catch (error: any) {
                         const classifiedError = classifyError(error)
-                        if(isDevelopment())
+                        if (isDevelopment())
                             console.log(classifiedError);
                         set({
                             isMutating: false,
@@ -298,42 +318,30 @@ const useEventStore = create<EventStore>()(
                 clearError: () => { set({ error: null }) },
                 clearEvents: () => {
                     set({
-                        eventsById: {},
-                        allEventIds: [],
-                        nearbyEventIds: [],
+                       
+                        allEvents: [],
+                        nearbyEvents: [],
                         selectedFilters: {},
+                        myEvents : [],
                         pagination: {
+                            myEvents : createInitialPaginationState(),
                             allEvents: createInitialPaginationState(),
                             nearbyEvents: createInitialPaginationState()
                         }
                     })
                 },
 
-                getEventById: (id) => {
-                    const state = get()
-                    return state.eventsById[id] || null
-                },
-                getAllEvents: () => {
-                    const state = get()
-                    return state.allEventIds
-                        .map(id => state.eventsById[id])
-                        .filter(Boolean)
-                },
-                getNearbyEvents: () => {
-                    const state = get()
-                    return state.nearbyEventIds
-                        .map(id => state.eventsById[id])
-                        .filter(Boolean)
-                },
+               
 
 
             }), { name: 'event-store' }
-        ), { name: 'event-storage'  ,
-            partialize :(state)=>({
-                eventsById : state.eventsById,
-                selectedFilters : state.selectedFilters
-            })
-        }
+        ), {
+            name: 'event-storage',
+        partialize: (state) => ({
+            
+            selectedFilters: state.selectedFilters
+        })
+    }
     )
 )
 
