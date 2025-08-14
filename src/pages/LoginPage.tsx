@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { email, z } from 'zod';
+import { z } from 'zod';
 import { Link } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
@@ -12,10 +12,9 @@ import { message } from 'antd'
 import { useAuthStore } from '../store/authStore';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { classifyError , errorType , getErrorMessage } from '../utils/errorHandling';
 // Login form validation schema matching backend exactly
 const loginSchema = z.object({
-    email: z.string()
+    email: z
         .email("Invalid email format")
         .min(1, "Email is required"),
     password: z.string()
@@ -30,7 +29,8 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export const LoginPage: React.FC = () => {
     const navigate = useNavigate()
     const [showPassword, setShowPassword] = useState(false);
-    const { login, isLoading, error, clearError, isAuthenticated } = useAuthStore();
+    const hasNavigated = useRef(false);
+    const { login, isLoading, error, clearError, isAuthenticated, user } = useAuthStore();
     const {
         register,
         handleSubmit,
@@ -44,35 +44,20 @@ export const LoginPage: React.FC = () => {
     });
     useEffect(() => {
         clearError()
-    }, [clearError]);
+    }, []);
 
     useEffect(() => {
-        if (isAuthenticated) {
-            navigate('/dashboard')
+        if (isAuthenticated && user && !hasNavigated.current) {
+            hasNavigated.current = true;
+            message.success(`Welcome back, ${user.name}!`);
+            navigate('/');
         }
-    })
+    }, [isAuthenticated, user, navigate]);
+
+
+
     const handleFormSubmit = async (data: LoginFormData) => {
-        try {
-
-            const result = await login(data.email, data.password);
-
-            message.success(result.message || "Log in successful")
-
-            const user = result.user;
-            if (user?.role === "ADMIN") navigate("/admin")
-            else if (user?.role === "ORGANIZER") navigate("organizer/dashboard");
-            else navigate('/dashboard')
-
-        } catch (error: any) {
-            console.log( "error : ",error)
-            const classifiedError =  classifyError(error);
-           console.log( "classified : ",  classifiedError)
-              console.log('Login Error Details : ',{
-                message : classifiedError.technicalMessage,
-                fields : classifiedError.fielderrors 
-              });
-              message.error(classifiedError.message,10)
-        } 
+        await login(data)
     };
 
     return (

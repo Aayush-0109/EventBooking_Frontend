@@ -3,6 +3,7 @@ import { persist, devtools } from 'zustand/middleware'
 import AuthService from '../services/authService'
 import { User, LoginCredentials, RegisterData, UpdateUserData, } from '../services/api/types'
 import { classifyError } from '../utils/errorHandling';
+import { isDevelopment } from '../config/environment';
 
 
 
@@ -14,6 +15,7 @@ interface AuthStore {
     isAuthenticated: boolean;
     isLoading: boolean;
     error: string | null;
+    isAuthChecking : boolean
 
     login: (credentials: LoginCredentials) => Promise<void>;
     registerUser: (userData: RegisterData) => Promise<void>;
@@ -35,6 +37,7 @@ export const useAuthStore = create<AuthStore>()(
                 isAuthenticated: false,
                 error: null,
                 isLoading: false,
+                isAuthChecking : false,
                 // login 
 
                 login: async (credentials) => {
@@ -43,7 +46,8 @@ export const useAuthStore = create<AuthStore>()(
                         error: null
                     })
                     try {
-
+                        
+                         
                         const response = await AuthService.login(credentials);
                         if (response.success && response.data) {
                             set(
@@ -61,15 +65,16 @@ export const useAuthStore = create<AuthStore>()(
                         }
 
                     } catch (error: any) {
-                        console.log("Login failed :", error);
                         const classifiedError = classifyError(error);
+                        if (isDevelopment())
+                            console.log("Login failed :", classifiedError);
                         set({
                             user: null,
                             isAuthenticated: false,
                             isLoading: false,
                             error: classifiedError.message
                         })
-                        throw error
+
                     }
 
                 },
@@ -85,8 +90,6 @@ export const useAuthStore = create<AuthStore>()(
                         if (response.success) {
                             set(
                                 {
-                                    user: response.data,
-                                    isAuthenticated: true,
                                     isLoading: false,
                                     error: null
                                 }
@@ -99,12 +102,10 @@ export const useAuthStore = create<AuthStore>()(
                         console.log("Registration failed : ", error);
                         const classifiedError = classifyError(error);
                         set({
-                            user: null,
-                            isAuthenticated: false,
                             isLoading: false,
                             error: classifiedError.message
                         })
-                        throw error;
+
 
 
                     }
@@ -137,7 +138,7 @@ export const useAuthStore = create<AuthStore>()(
                                 error: 'Logout failed due to network error. Please try again.',
 
                             });
-                            throw error;
+
 
                         } else if (classifiedError.type === 'authentication_error' || classifiedError.type === 'authorization_error') {
 
@@ -156,7 +157,7 @@ export const useAuthStore = create<AuthStore>()(
                                 error: 'Server error during logout. Please try again or contact support.',
 
                             });
-                            throw error;
+
 
                         } else {
 
@@ -164,14 +165,14 @@ export const useAuthStore = create<AuthStore>()(
                                 isLoading: false,
                                 error: 'Logout failed. Please try again.',
                             });
-                            throw error;
+
                         }
                     }
                 },
                 checkAuth: async () => {
 
                     set({
-                        isLoading: true
+                        isAuthChecking: true
                     })
                     try {
                         const response = await AuthService.getCurrentUser();
@@ -180,21 +181,20 @@ export const useAuthStore = create<AuthStore>()(
                                 user: response.data,
                                 isAuthenticated: true,
                                 error: null,
-                                isLoading: false
+                                isAuthChecking: false
                             })
                             console.log("Ath check successful");
 
                         }
                         else throw new Error("Authentication check failed")
                     } catch (error) {
-                        console.log('Authentication check failed')
                         set({
                             user: null,
                             isAuthenticated: false,
-                            isLoading: false,
+                            isAuthChecking: false,
                             error: null,
                         });
-                        throw error
+                      throw error
                     }
                 },
                 refreshToken: async () => {
@@ -250,7 +250,7 @@ export const useAuthStore = create<AuthStore>()(
                             isLoading: false,
                             error: classifiedError.message
                         })
-                        throw error
+
                     }
                 },
 

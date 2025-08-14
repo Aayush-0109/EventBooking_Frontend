@@ -43,14 +43,3 @@ export const isDevelopment = () => env.isDevelopment;
 export const isProduction = () => env.isProduction;
 export const getApiUrl = () => env.apiUrl;
 
-if (env.isDevelopment && env.enableConsoleLogs) {
-    console.log('🔧 Environment Configuration:', {
-        apiUrl: env.apiUrl,
-        appTitle: env.appTitle,
-        logLevel: env.logLevel,
-        enableDevTools: env.enableDevTools,
-        enableConsoleLogs: env.enableConsoleLogs,
-        isDevelopment: env.isDevelopment,
-        isProduction: env.isProduction
-    });
-}

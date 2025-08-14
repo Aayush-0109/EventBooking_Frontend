@@ -3,6 +3,8 @@ import { LoginCredentials, RegisterData, UpdateUserData, ApiResponse, User } fro
 
 class AuthService {
     static async login(credentials: LoginCredentials): Promise<ApiResponse<User>> {
+        console.log("Started login inside service");
+        
         const response = await post<User>("/auth/login", credentials);
         return response.data;
     }

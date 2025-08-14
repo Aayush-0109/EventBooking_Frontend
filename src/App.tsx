@@ -33,7 +33,8 @@ function App() {
           <Header />
           <Container className="flex-1 py-8">
             <Routes>
-              {/* 🌐 PUBLIC ROUTES - Match backend public endpoints */}
+              
+              
               <Route path="/" element={<HomePage />} />
               <Route path="/events" element={<EventsPage />} />
               <Route path="/events/:id" element={<EventDetailsPage />} />
@@ -41,9 +42,7 @@ function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
 
-              {/* 🔐 AUTHENTICATION REQUIRED ROUTES */}
-
-              {/* Any authenticated user can access these */}
+         
               <Route path="/dashboard" element={
                 <ProtectedRoute >
                   <UserDashboard />

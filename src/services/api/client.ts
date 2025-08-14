@@ -17,10 +17,8 @@ export const createApiClient = (): AxiosInstance => {
     client.interceptors.request.use(
         (config) => {
             if (isDevelopment()) {
-                console.log(`API request :${config.method?.toUpperCase()} ${config.url}`);
-                console.log('   Headers:', config.headers);
-                console.log('   Data:', config.data);
-
+                
+                
                 (config as any).metadata = { startTime: new Date() };
             }
             return config;
@@ -55,24 +53,18 @@ export const createApiClient = (): AxiosInstance => {
                 originalRequest._retry = true;
 
                 try {
-                    if (isDevelopment()) {
-                        console.log("Access token expired, attempting refresh...");
-                    }
+                    
 
                     const refreshResponse = await client.post("/auth/refresh-token");
 
                     if (refreshResponse.data.success) {
-                        if (isDevelopment()) {
-                            console.log("Token refreshed successfully, retrying original request...");
-                        }
+                        
                         return client(originalRequest);
                     }
 
                     throw new Error("Refresh Token invalid");
                 } catch (error) {
-                    if (isDevelopment()) {
-                        console.log("Token refresh failed, user needs to login again");
-                    }
+                   
 
 
                     const { useAuthStore } = await import('../../store/authStore');
@@ -82,11 +74,7 @@ export const createApiClient = (): AxiosInstance => {
                 }
             }
 
-            if (isDevelopment()) {
-                console.error(`  API Error: ${error.response?.status} ${error.message}`);
-                console.error('   URL:', error.config?.url);
-                console.error('   Response Data:', error.response?.data);
-            }
+           
 
             return Promise.reject(error);
         }

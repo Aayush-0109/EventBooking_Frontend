@@ -9,20 +9,9 @@ const events : any = []
 const EventsPage: React.FC = () => {
     const [loading] = useState(false);
     const navigate = useNavigate();
-let response;
+
     
-    useEffect(() => {
-      ( async ()=>{
-        try {
-            response = await api.get('/events')
-            message.success(response.message);
-        } catch (error) {
-           const classifiedError =  classifyError(error)
-           message.error(classifiedError.message);
-           console.log(classifiedError.technicalMessage)
-        }
-      })()
-    }, []);
+   
 
     return (
         <div className="space-y-6">
@@ -40,9 +29,9 @@ let response;
                 <div>No events found.</div>
             ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {events.map(event : any => (
+                    {/* {events.map(event : any => (
                         <EventCard key={event.id} event={event} />
-                    ))}
+                    ))} */}
                 </div>
             )}
         </div>

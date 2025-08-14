@@ -33,25 +33,16 @@ const Header: React.FC = () => {
         }
     };
 
-    // Get role-based navigation items
+  
     const getRoleBasedNavItems = () => {
         const baseItems = [
             { label: 'Home', href: '/' },
             { label: 'Events', href: '/events' },
         ];
 
-        // ❌ Remove this redundant section:
-        // if (!isAuthenticated) {
-        //     return [
-        //         ...baseItems,
-        //         { label: 'Login', href: '/login' },
-        //         { label: 'Register', href: '/register' },
-        //     ];
-        // }
-
-        // ✅ Always return baseItems for unauthenticated users
+    
         if (!isAuthenticated) {
-            return baseItems;  // Just Home and Events
+            return baseItems;  
         }
 
         // Authenticated user items
@@ -189,14 +180,14 @@ const Header: React.FC = () => {
                             <div className="flex items-center space-x-3">
                                 <Button
                                     onClick={() => navigate('/login')}
-                                    variant="ghost"  // ← Consistent variant
+                                    variant="ghost"  
                                     size="sm"
                                 >
                                     Login
                                 </Button>
                                 <Button
                                     onClick={() => navigate('/register')}
-                                    variant="primary"  // ← Consistent variant
+                                    variant="primary"  
                                     size="sm"
                                 >
                                     Register
@@ -205,7 +196,7 @@ const Header: React.FC = () => {
                         )}
                     </nav>
 
-                    {/* Mobile Menu Button */}
+                    
                     <button
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                         className="md:hidden text-neutral-700 hover:text-primary-600"
@@ -214,7 +205,7 @@ const Header: React.FC = () => {
                     </button>
                 </div>
 
-                {/* Mobile Navigation */}
+               
                 {isMobileMenuOpen && (
                     <div className="md:hidden border-t border-neutral-200 py-4">
                         <nav className="flex flex-col space-y-2">
@@ -229,7 +220,7 @@ const Header: React.FC = () => {
                                 </Link>
                             ))}
 
-                            {/* Mobile User Section */}
+                            
                             {isAuthenticated ? (
                                 <div className="border-t border-neutral-200 pt-4 mt-4">
                                     <div className="flex items-center space-x-3 mb-4">
@@ -273,7 +264,33 @@ const Header: React.FC = () => {
                                         <span>Logout</span>
                                     </button>
                                 </div>
-                            ) : null}
+                            ) : (
+                                // 🆕 ADD THIS: Mobile Login/Register buttons for unauthenticated users
+                                <div className="border-t border-neutral-200 pt-4 mt-4 space-y-3">
+                                    <Button
+                                        onClick={() => {
+                                            navigate('/login');
+                                            setIsMobileMenuOpen(false);
+                                        }}
+                                        variant="ghost"
+                                        size="sm"
+                                        className="w-full justify-center"
+                                    >
+                                        Login
+                                    </Button>
+                                    <Button
+                                        onClick={() => {
+                                            navigate('/register');
+                                            setIsMobileMenuOpen(false);
+                                        }}
+                                        variant="primary"
+                                        size="sm"
+                                        className="w-full justify-center"
+                                    >
+                                        Register
+                                    </Button>
+                                </div>
+                            )}
                         </nav>
                     </div>
                 )}
