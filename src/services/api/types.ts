@@ -180,7 +180,6 @@ export interface UpdateRequestStatusData {
 export interface OrganizerRequestQuery {
     page?: number;
     limit?: number;
-    sortBy?: 'createdAt' | 'status';
     sortOrder?: 'asc' | 'desc';
 }
 export interface FileUploadConfig {

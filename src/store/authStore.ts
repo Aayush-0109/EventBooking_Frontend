@@ -29,7 +29,7 @@ interface AuthStore {
 
 export const useAuthStore = create<AuthStore>()(
     persist(
-        devtools((set, get) => (
+        devtools((set) => (
             {
                 user: null,
                 isAuthenticated: false,

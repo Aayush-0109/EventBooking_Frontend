@@ -2,7 +2,6 @@ import { get, del } from './api/client';
 import {
     Registration,
     RegistrationQuery,
-    PaginatedResponse,
     ApiResponse,
     RegistrationsResponse
 } from './api/types';

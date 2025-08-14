@@ -4,9 +4,9 @@ import {
     CreateOrganizerRequestData,
     UpdateRequestStatusData,
     OrganizerRequestQuery,
-    PaginatedResponse,
     ApiResponse,
-    UpdateRequestStatusResponse
+    UpdateRequestStatusResponse,
+    OrganizerRequestsResponse
 } from './api/types';
 
 class OrganizerRequestService {
@@ -18,8 +18,8 @@ class OrganizerRequestService {
         const response = await post<OrganizerRequest>("/organizer-request/create", formData);
         return response.data;
     }
-    static async getRequests(query?: OrganizerRequestQuery): Promise<ApiResponse<PaginatedResponse<OrganizerRequest>>> {
-        const response = await get<PaginatedResponse<OrganizerRequest>>('/organizer-request/get', { params: query });
+    static async getRequests(query?: OrganizerRequestQuery): Promise<ApiResponse<OrganizerRequestsResponse>> {
+        const response = await get<OrganizerRequestsResponse>('/organizer-request/get', { params: query });
         return response.data;
     }
     static async getRequestById(id: number): Promise<ApiResponse<OrganizerRequest>> {
