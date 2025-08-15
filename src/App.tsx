@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
@@ -11,7 +10,6 @@ import { UserDashboard } from './pages/UserDashboard';
 import { OrganizerDashboard } from './pages/OrganizerDashboard';
 import { CreateEventPage } from './pages/CreateEventPage';
 import { OrganizerRequestPage } from './pages/OrganizerRequestPage';
-import OrganizerRequestsPage from './pages/OrganizerRequestsPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import AdminUsersPage from './pages/AdminUsersPage';
 import AdminEventsPage from './pages/AdminEventsPage';
@@ -19,7 +17,6 @@ import AdminOrganizerRequestsPage from './pages/AdminOrganizerRequestsPage';
 import BookingDetailsPage from './pages/BookingDetailsPage';
 import NearbyEventsPage from './pages/NearbyEventsPage';
 import { EventDetailsPage } from './pages/EventDetailsPage';
-import { env } from './config/environment';
 import { AuthProvider } from './components/auth/AuthProvider';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import UnauthorizedPage from './pages/unauthorizedPage';
@@ -34,7 +31,7 @@ function App() {
           <Container className="flex-1 py-8">
             <Routes>
               
-              
+
               <Route path="/" element={<HomePage />} />
               <Route path="/events" element={<EventsPage />} />
               <Route path="/events/:id" element={<EventDetailsPage />} />

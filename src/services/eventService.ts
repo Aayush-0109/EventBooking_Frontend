@@ -14,6 +14,10 @@ import {
 
 class EventService {
     static async getEvents(query?: EventQuery): Promise<ApiResponse<EventsResponse>> {
+        if (query?.startDate)
+            query.startDate = new Date(query?.startDate).toISOString()
+        if (query?.endDate)
+            query.endDate = new Date(query.endDate).toISOString()
         const response = await get<EventsResponse>("/events", { params: query });
         return response.data;
     }

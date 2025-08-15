@@ -3,41 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Calendar, MapPin, Users, Clock, ArrowLeft, Share2, Bookmark } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Container from '../components/layout/Container';
-import { Event } from '../types';
+import { Event } from '../services/index';
 import { formatDate } from '../lib/utils';
-
-// Mock event data - in real app this would come from API
-const mockEvent: Event = {
-    id: 1,
-    title: 'Tech Conference 2024',
-    description: 'Join us for the biggest technology conference of the year! This event brings together industry leaders, innovators, and tech enthusiasts for three days of inspiring talks, workshops, and networking opportunities. Learn about the latest trends in AI, blockchain, cloud computing, and more. Whether you\'re a developer, entrepreneur, or tech enthusiast, this conference has something for everyone.',
-    date: '2024-02-15T09:00:00Z',
-    images: [
-        'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800',
-        'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800',
-        'https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=800'
-    ],
-    registrations: [],
-    user: {
-        id: 1,
-        name: 'Tech Events Inc',
-        email: 'contact@techevents.com',
-        role: 'ORGANIZER' as const,
-        profileImage: null,
-        createdAt: '2024-01-01T00:00:00Z',
-        updatedAt: '2024-01-01T00:00:00Z'
-    },
-    longitude: -74.0060,
-    latitude: 40.7128,
-    address: '123 Convention Center Blvd',
-    city: 'New York',
-    state: 'NY',
-    country: 'USA',
-    postalCode: '10001',
-    createdBy: 1,
-    createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: '2024-01-01T00:00:00Z',
-};
 
 export const EventDetailsPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
