@@ -1,48 +1,77 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Calendar, MapPin, Users, Clock, ArrowLeft, Share2, Bookmark } from 'lucide-react';
+import { Calendar, MapPin, Users, Clock, ArrowLeft, Share2, Bookmark, X } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Container from '../components/layout/Container';
-import { Event } from '../services/index';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
 import { formatDate } from '../lib/utils';
-
+import useEventStore from '../store/eventStore';
+import { useAuthStore } from '../store/authStore';
+import { message } from 'antd';
+import { isDevelopment } from '../config/environment';
 export const EventDetailsPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
+    const eventId = Number(id);
     const navigate = useNavigate();
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
-    const [isBooking, setIsBooking] = useState(false);
+    const { currentEvent, clearError, fetchEventById, error, isMutating, isLoading, bookEvent } = useEventStore();
+    const { isAuthenticated, user } = useAuthStore()
 
     // In real app, fetch event by ID from API
-    const event = mockEvent;
+    useEffect(() => {
+        clearError()
+    }, [clearError]);
+
+    useEffect(() => {
+        (async () => { await fetchEventById(eventId) })()
+    }, [fetchEventById, eventId])
 
     const handleBookEvent = async () => {
-        setIsBooking(true);
+        if (!(isAuthenticated && user)) {
+            message.warning("You need to login before booking an event!")
+            navigate('/login')
+        }
         try {
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            alert('Event booked successfully! You will receive a confirmation email shortly.');
+            await bookEvent(eventId)
+            message.success("Event Booked successfully")
         } catch (error) {
-            console.error('Booking failed:', error);
-        } finally {
-            setIsBooking(false);
+             if(isDevelopment()) console.log(error);
+             
         }
     };
 
     const handleShare = () => {
         if (navigator.share) {
             navigator.share({
-                title: event.title,
-                text: event.description,
+                title: currentEvent?.title,
+                text: currentEvent?.description,
                 url: window.location.href,
             });
         } else {
-            // Fallback: copy to clipboard
             navigator.clipboard.writeText(window.location.href);
             alert('Link copied to clipboard!');
         }
     };
+    if (error) {
+        return (
+            <Container>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+                    <div className="flex items-center justify-between">
+                        <p className="text-red-700">{error}</p>
+                        <button
+                            onClick={() => navigate('/events')}
+                            className="flex items-center text-neutral-600 hover:text-neutral-900 mb-6 transition-colors"
+                        >
+                            <ArrowLeft className="w-4 h-4 mr-2" />
+                            Back to Events
+                        </button>
+                    </div>
+                </div>
+            </Container>
+        );
+    }
 
-    if (!event) {
+ else   if (!currentEvent ) {
         return (
             <Container>
                 <div className="text-center py-12">
@@ -56,7 +85,12 @@ export const EventDetailsPage: React.FC = () => {
 
     return (
         <Container>
-            <div className="py-8">
+            {isLoading ? (<div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                    <LoadingSpinner size="lg" />
+                    <p className="mt-4 text-neutral-600">Loading event details...</p>
+                </div>
+            </div>) : (<div className="py-8">
                 {/* Back Button */}
                 <button
                     onClick={() => navigate('/events')}
@@ -73,16 +107,16 @@ export const EventDetailsPage: React.FC = () => {
                         <div className="space-y-4">
                             <div className="relative h-96 rounded-xl overflow-hidden">
                                 <img
-                                    src={event.images?.[currentImageIndex] || '/placeholder-event.jpg'}
-                                    alt={event.title}
+                                    src={currentEvent.images?.[currentImageIndex] || '/placeholder-event.jpg'}
+                                    alt={currentEvent.title}
                                     className="w-full h-full object-cover"
                                 />
                             </div>
 
                             {/* Image Thumbnails */}
-                            {event.images && event.images.length > 1 && (
+                            {currentEvent.images && currentEvent.images.length > 1 && (
                                 <div className="flex space-x-2 overflow-x-auto">
-                                    {event.images.map((image, index) => (
+                                    {Array.isArray(currentEvent.images) && currentEvent.images.map((image, index) => (
                                         <button
                                             key={index}
                                             onClick={() => setCurrentImageIndex(index)}
@@ -93,7 +127,7 @@ export const EventDetailsPage: React.FC = () => {
                                         >
                                             <img
                                                 src={image}
-                                                alt={`${event.title} ${index + 1}`}
+                                                alt={`${currentEvent.title} ${index + 1}`}
                                                 className="w-full h-full object-cover"
                                             />
                                         </button>
@@ -106,10 +140,10 @@ export const EventDetailsPage: React.FC = () => {
                         <div className="space-y-6">
                             <div>
                                 <h1 className="text-3xl font-bold text-neutral-900 mb-4">
-                                    {event.title}
+                                    {currentEvent.title}
                                 </h1>
                                 <p className="text-neutral-600 leading-relaxed">
-                                    {event.description}
+                                    {currentEvent.description}
                                 </p>
                             </div>
 
@@ -120,7 +154,7 @@ export const EventDetailsPage: React.FC = () => {
                                         <Calendar className="w-5 h-5 text-primary-600" />
                                         <div>
                                             <p className="font-medium text-neutral-900">Date & Time</p>
-                                            <p className="text-neutral-600">{formatDate(event.date)}</p>
+                                            <p className="text-neutral-600">{formatDate(currentEvent.date)}</p>
                                         </div>
                                     </div>
 
@@ -129,29 +163,29 @@ export const EventDetailsPage: React.FC = () => {
                                         <div>
                                             <p className="font-medium text-neutral-900">Location</p>
                                             <p className="text-neutral-600">
-                                                {event.address}<br />
-                                                {event.city}, {event.state} {event.postalCode}
+                                                {currentEvent.address}<br />
+                                                {currentEvent.city}, {currentEvent.state} {currentEvent.postalCode}
                                             </p>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div className="space-y-4">
-                                    <div className="flex items-center space-x-3">
+                                    {/*   <div className="flex items-center space-x-3">
                                         <Users className="w-5 h-5 text-primary-600" />
                                         <div>
                                             <p className="font-medium text-neutral-900">Attendees</p>
                                             <p className="text-neutral-600">
-                                                {event.registrations?.length || 0} registered
+                                                {currentEvent.registrations?.length || 0} registered
                                             </p>
                                         </div>
-                                    </div>
+                                    </div> */}
 
                                     <div className="flex items-center space-x-3">
                                         <Clock className="w-5 h-5 text-primary-600" />
                                         <div>
                                             <p className="font-medium text-neutral-900">Organizer</p>
-                                            <p className="text-neutral-600">{event.user.name}</p>
+                                            <p className="text-neutral-600">{currentEvent.user?.name}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -168,10 +202,10 @@ export const EventDetailsPage: React.FC = () => {
                                 size="lg"
                                 className="w-full mb-4"
                                 onClick={handleBookEvent}
-                                loading={isBooking}
-                                disabled={isBooking}
+                                loading={isMutating}
+                                disabled={isMutating}
                             >
-                                {isBooking ? 'Booking...' : 'Book This Event'}
+                                {isMutating ? 'Booking...' : 'Book This Event'}
                             </Button>
 
                             {/* Action Buttons */}
@@ -196,24 +230,24 @@ export const EventDetailsPage: React.FC = () => {
                             {/* Event Stats */}
                             <div className="pt-6 border-t border-neutral-200">
                                 <div className="space-y-3">
-                                    <div className="flex justify-between">
-                                        <span className="text-neutral-600">Registered</span>
-                                        <span className="font-medium">{event.registrations?.length || 0}</span>
-                                    </div>
+
                                     <div className="flex justify-between">
                                         <span className="text-neutral-600">Created</span>
-                                        <span className="font-medium">{formatDate(event.createdAt)}</span>
+                                        <span className="font-medium">{formatDate(currentEvent.createdAt)}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-neutral-600">Last Updated</span>
-                                        <span className="font-medium">{formatDate(event.updatedAt)}</span>
+                                        <span className="font-medium">{formatDate(currentEvent.updatedAt)}</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </Container>
+            </div>)}
+
+        </Container >
     );
-}; 
+};
+
+export default EventDetailsPage
