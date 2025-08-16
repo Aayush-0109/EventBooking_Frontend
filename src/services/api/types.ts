@@ -55,7 +55,7 @@ export interface Event {
         email?: string;
         profileImage?: string | null;
     };
-    bookingCount?: number;
+    registrations?: number;
 }
 
 export interface CreateEventData {

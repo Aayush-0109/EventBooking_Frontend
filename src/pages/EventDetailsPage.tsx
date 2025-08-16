@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Calendar, MapPin, Clock, ArrowLeft, Share2, Bookmark } from 'lucide-react';
+import { Calendar, MapPin, Clock, ArrowLeft, Share2, Bookmark, Users } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Container from '../components/layout/Container';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
@@ -52,7 +52,20 @@ export const EventDetailsPage: React.FC = () => {
             alert('Link copied to clipboard!');
         }
     };
-    if (error) {
+
+    if(isLoading){
+        return(
+            <Container>
+                <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                    <LoadingSpinner size="lg" />
+                    <p className="mt-4 text-neutral-600">Loading event details...</p>
+                </div>
+            </div>
+            </Container>
+        )
+    }
+    else if (error) {
         return (
             <Container>
                 <div className="bg-red-50 border border-red-200 rounded-lg p-6">
@@ -71,7 +84,7 @@ export const EventDetailsPage: React.FC = () => {
         );
     }
 
-    else if (!currentEvent) {
+    else if (!currentEvent ) {
         return (
             <Container>
                 <div className="text-center py-12">
@@ -85,12 +98,7 @@ export const EventDetailsPage: React.FC = () => {
 
     return (
         <Container>
-            {isLoading ? (<div className="flex items-center justify-center py-12">
-                <div className="text-center">
-                    <LoadingSpinner size="lg" />
-                    <p className="mt-4 text-neutral-600">Loading event details...</p>
-                </div>
-            </div>) : (<div className="py-8">
+             <div className="py-8">
                 {/* Back Button */}
                 <button
                     onClick={() => navigate('/events')}
@@ -174,15 +182,15 @@ export const EventDetailsPage: React.FC = () => {
                                 </div>
 
                                 <div className="space-y-4">
-                                    {/*   <div className="flex items-center space-x-3">
+                                      <div className="flex items-center space-x-3">
                                         <Users className="w-5 h-5 text-primary-600" />
                                         <div>
                                             <p className="font-medium text-neutral-900">Attendees</p>
                                             <p className="text-neutral-600">
-                                                {currentEvent.registrations?.length || 0} registered
+                                                {currentEvent.registrations || 0} registered
                                             </p>
                                         </div>
-                                    </div> */}
+                                    </div>
 
                                     <div className="flex items-center space-x-3">
                                         <Clock className="w-5 h-5 text-primary-600" />
@@ -247,7 +255,7 @@ export const EventDetailsPage: React.FC = () => {
                         </div>
                     </div>
                 </div>
-            </div>)}
+            </div>
 
         </Container >
     );

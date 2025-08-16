@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, MapPin} from 'lucide-react';
+import { Calendar, MapPin, Users} from 'lucide-react';
 import { Event } from '../../services';
 import { formatDate } from '../../lib/utils';
 import Button from '../ui/Button';
@@ -52,10 +52,10 @@ const EventCard: React.FC<EventCardProps> = ({
                         <MapPin className="w-4 h-4" />
                         <span>{event.city}, {event.state}</span>
                     </div>
-                    {/* <div className="flex items-center gap-2 text-sm text-neutral-500">
+                    <div className="flex items-center gap-2 text-sm text-neutral-500">
                         <Users className="w-4 h-4" />
-                        <span>{event.registrations?.length || 0} attendees</span>
-                    </div> */}
+                        <span>{event.registrations || 0} attendees</span>
+                    </div>
                 </div>
 
                 {/* Action Buttons */}
