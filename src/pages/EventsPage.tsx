@@ -46,17 +46,21 @@ const EventsPage: React.FC = () => {
 
     const handleSearch = () => {
         const query: EventQuery = {
+            ...tempFilters,
             page: 1,
-            ...tempFilters
         };
         fetchEvents(query);
     };
 
     const handlePageChange = (newPage: number) => {
+        console.log(newPage);
+
         const query: EventQuery = {
+            ...selectedFilters,
             page: newPage,
-            ...selectedFilters
         };
+        console.log(query);
+
         fetchEvents(query);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }

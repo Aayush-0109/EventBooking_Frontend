@@ -15,7 +15,11 @@ class AuthService {
             formData.append('email', userData.email);
             formData.append('password', userData.password);
             formData.append('profileImage', userData.profileImage);
-            const response = await post<User>("/auth/register", formData);
+            console.log(formData);
+            
+            const response = await post<User>("/auth/register", formData,{headers:{
+                "Content-Type" : 'multipart/form-data'
+            }});
             return response.data;
         }
         else {

@@ -30,7 +30,10 @@ class EventService {
         return response.data;
     }
     static async createEvent(eventData: CreateEventData): Promise<ApiResponse<Event>> {
+        eventData.date = new Date(eventData.date).toISOString()
         if (eventData.images && eventData.images.length > 0) {
+            console.log(eventData.images);
+
             const formData = new FormData();
             Object.entries(eventData).forEach(([key, value]) => {
                 if (key !== 'images' && value !== undefined) {
@@ -41,10 +44,18 @@ class EventService {
             eventData.images.forEach((image) => {
                 formData.append("images", image)
             });
-            const response = await post<Event>("/events", formData);
+            console.log(formData);
+
+            const response = await post<Event>("/events", formData, {
+                headers: {
+                    "Content-Type": 'multipart/form-data'
+                }
+            });
             return response.data;
         }
         else {
+            console.log("not in");
+
             const { images, ...formData } = eventData;
             const response = await post<Event>("/events", formData);
             return response.data

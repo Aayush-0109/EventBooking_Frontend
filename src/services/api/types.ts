@@ -90,7 +90,7 @@ export interface EventQuery {
     page?: number;
     limit?: number;
     search?: string;
-    location?: string;       
+    location?: string;
     startDate?: string;
     endDate?: string;
     sortBy?: 'date' | 'title' | 'createdAt';

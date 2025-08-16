@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, MapPin, Users } from 'lucide-react';
-import { Event } from '../../types';
+import { Calendar, MapPin} from 'lucide-react';
+import { Event } from '../../services';
 import { formatDate } from '../../lib/utils';
 import Button from '../ui/Button';
 
@@ -20,9 +20,9 @@ const EventCard: React.FC<EventCardProps> = ({
         <div className="bg-white rounded-xl shadow-soft overflow-hidden hover:shadow-medium transition-shadow">
             {/* Event Image */}
             <div className="h-48 bg-gradient-to-br from-primary-200 to-primary-300 flex items-center justify-center">
-                {event.images && event.images.length > 0 ? (
+                {event.images && !Array.isArray(event.images) ? (
                     <img
-                        src={event.images[0]}
+                        src={event.images}
                         alt={event.title}
                         className="w-full h-full object-cover"
                     />
@@ -52,10 +52,10 @@ const EventCard: React.FC<EventCardProps> = ({
                         <MapPin className="w-4 h-4" />
                         <span>{event.city}, {event.state}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-neutral-500">
+                    {/* <div className="flex items-center gap-2 text-sm text-neutral-500">
                         <Users className="w-4 h-4" />
                         <span>{event.registrations?.length || 0} attendees</span>
-                    </div>
+                    </div> */}
                 </div>
 
                 {/* Action Buttons */}

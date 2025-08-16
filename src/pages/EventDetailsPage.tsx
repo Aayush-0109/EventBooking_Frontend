@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Calendar, MapPin, Users, Clock, ArrowLeft, Share2, Bookmark, X } from 'lucide-react';
+import { Calendar, MapPin, Clock, ArrowLeft, Share2, Bookmark } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Container from '../components/layout/Container';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
@@ -35,8 +35,8 @@ export const EventDetailsPage: React.FC = () => {
             await bookEvent(eventId)
             message.success("Event Booked successfully")
         } catch (error) {
-             if(isDevelopment()) console.log(error);
-             
+            if (isDevelopment()) console.log(error);
+
         }
     };
 
@@ -71,7 +71,7 @@ export const EventDetailsPage: React.FC = () => {
         );
     }
 
- else   if (!currentEvent ) {
+    else if (!currentEvent) {
         return (
             <Container>
                 <div className="text-center py-12">
@@ -106,11 +106,14 @@ export const EventDetailsPage: React.FC = () => {
                         {/* Event Images */}
                         <div className="space-y-4">
                             <div className="relative h-96 rounded-xl overflow-hidden">
-                                <img
-                                    src={currentEvent.images?.[currentImageIndex] || '/placeholder-event.jpg'}
-                                    alt={currentEvent.title}
-                                    className="w-full h-full object-cover"
-                                />
+                                {(currentEvent.images && currentEvent.images.length>0) ? 
+                                    (<img
+                                        src={currentEvent.images?.[currentImageIndex] || '/placeholder-event.jpg'}
+                                        alt={currentEvent.title}
+                                        className="w-full h-full object-cover"
+                                    />) :
+                                    (<Calendar className="w-full h-full object-cover text-primary-600" />)    
+                            }
                             </div>
 
                             {/* Image Thumbnails */}

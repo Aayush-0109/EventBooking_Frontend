@@ -33,16 +33,16 @@ const Header: React.FC = () => {
         }
     };
 
-  
+
     const getRoleBasedNavItems = () => {
         const baseItems = [
             { label: 'Home', href: '/' },
             { label: 'Events', href: '/events' },
         ];
 
-    
+
         if (!isAuthenticated) {
-            return baseItems;  
+            return baseItems;
         }
 
         // Authenticated user items
@@ -180,14 +180,14 @@ const Header: React.FC = () => {
                             <div className="flex items-center space-x-3">
                                 <Button
                                     onClick={() => navigate('/login')}
-                                    variant="ghost"  
+                                    variant="ghost"
                                     size="sm"
                                 >
                                     Login
                                 </Button>
                                 <Button
                                     onClick={() => navigate('/register')}
-                                    variant="primary"  
+                                    variant="primary"
                                     size="sm"
                                 >
                                     Register
@@ -196,7 +196,7 @@ const Header: React.FC = () => {
                         )}
                     </nav>
 
-                    
+
                     <button
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                         className="md:hidden text-neutral-700 hover:text-primary-600"
@@ -205,7 +205,7 @@ const Header: React.FC = () => {
                     </button>
                 </div>
 
-               
+
                 {isMobileMenuOpen && (
                     <div className="md:hidden border-t border-neutral-200 py-4">
                         <nav className="flex flex-col space-y-2">
@@ -220,7 +220,7 @@ const Header: React.FC = () => {
                                 </Link>
                             ))}
 
-                            
+
                             {isAuthenticated ? (
                                 <div className="border-t border-neutral-200 pt-4 mt-4">
                                     <div className="flex items-center space-x-3 mb-4">

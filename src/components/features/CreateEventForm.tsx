@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import LoadingSpinner from '../ui/LoadingSpinner';
-import { Calendar, MapPin, FileText, Upload, X } from 'lucide-react';
-
+import { Calendar, MapPin, Upload, X } from 'lucide-react';
+import useEventStore from '../../store/eventStore';
+import { isDevelopment } from '../../config/environment';
 // Form validation schema (for React Hook Form)
 const createEventFormSchema = z.object({
   title: z.string()
@@ -34,66 +35,28 @@ const createEventFormSchema = z.object({
   postalCode: z.string().min(3, "Postal code is required"),
 });
 
-// Backend validation schema (matches backend exactly)
-const createEventSchema = z.object({
-  title: z.string()
-    .min(3, "Title must have at least 3 characters")
-    .max(100, "Title cannot exceed 100 characters")
-    .trim(),
-  description: z.string()
-    .min(10, "Description must have at least 10 characters")
-    .max(1000, "Description cannot exceed 1000 characters")
-    .trim(),
-  date: z
-    .string()
-    .datetime("Invalid date format, use ISO string")
-    .transform(date => new Date(date))
-    .refine(date => date > new Date(), "Event date must be in future"),
-  longitude: z.number()
-    .min(-180, "Invalid longitude")
-    .max(180, "Invalid longitude"),
-  latitude: z.number()
-    .min(-85.05112878, "Invalid latitude")
-    .max(85.05112878, "Invalid latitude"),
-  address: z.string().min(5, "Complete address is required"),
-  city: z.string().min(2, "City is required"),
-  state: z.string().min(2, "State/Province is required"),
-  country: z.string().min(2, "Country is required"),
-  postalCode: z.string().min(3, "Postal code is required"),
-});
 
-// Raw form data type (what the form actually handles)
-type CreateEventFormData = {
-  title: string;
-  description: string;
-  date: string;
-  longitude: number;
-  latitude: number;
-  address: string;
-  city: string;
-  state: string;
-  country: string;
-  postalCode: string;
-};
+
+
+
 
 // Validated data type (after schema validation)
-type ValidatedEventData = z.infer<typeof createEventSchema>;
-
+type CreateEventFormData = z.infer<typeof createEventFormSchema>;  // ✅ Use same schema
+type CompleteSubmissionData = CreateEventFormData & { images: File[] };
 interface CreateEventFormProps {
-  onSubmit: (data: ValidatedEventData) => Promise<void>;
+  onSubmit: (data: CompleteSubmissionData) => Promise<void>;
   onCancel: () => void;
 }
 
 export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCancel }) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { isMutating, error, clearError } = useEventStore()
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
-
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
   const {
     register,
     handleSubmit,
     formState: { errors },
     setValue,
-    watch
   } = useForm<CreateEventFormData>({
     resolver: zodResolver(createEventFormSchema),
     defaultValues: {
@@ -109,31 +72,51 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCa
       postalCode: '',
     }
   });
+  useEffect(() => {
+    clearError()
+  }, [clearError])
+
+  useEffect(() => {
+    return () => {
+      imageUrls.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [imageUrls]);
 
   const handleFormSubmit = async (data: CreateEventFormData) => {
-    setIsSubmitting(true);
     try {
-      // Validate the data using the schema
-      const validatedData = createEventSchema.parse(data);
-      await onSubmit(validatedData);
-    } catch (error) {
-      console.error('Event creation failed:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
+      const completeData: CompleteSubmissionData = {
+        ...data,
+        images: selectedImages
+      }
+      console.log(completeData);
+      
+      await onSubmit(completeData);
+    } catch (error) {
+      if (isDevelopment())
+        console.error('Event creation failed:', error);
+
+    };
+  }
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
+    const newUrls = files.map(file => URL.createObjectURL(file));
+
     setSelectedImages(prev => [...prev, ...files]);
+    setImageUrls(prev => [...prev, ...newUrls]);
   };
 
   const removeImage = (index: number) => {
     setSelectedImages(prev => prev.filter((_, i) => i !== index));
+    setImageUrls(prev => {
+      const newUrls = prev.filter((_, i) => i !== index);
+      URL.revokeObjectURL(prev[index]);
+      return newUrls;
+    });
   };
 
   const handleLocationSelect = () => {
-    // Mock location selection - in real app, this would open a map picker
+
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -155,6 +138,21 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCa
         <h2 className="text-2xl font-bold text-neutral-900 mb-2">Create New Event</h2>
         <p className="text-neutral-600">Fill in the details below to create your event</p>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+          <div className="flex items-center justify-between">
+            <p className="text-red-700">{error}</p>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearError}
+            >
+              Dismiss
+            </Button>
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
         {/* Basic Information */}
@@ -314,6 +312,7 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCa
                 onChange={handleImageUpload}
                 className="hidden"
                 id="image-upload"
+                disabled={isMutating}
               />
               <label htmlFor="image-upload" className="cursor-pointer">
                 <Upload className="w-8 h-8 text-neutral-400 mx-auto mb-2" />
@@ -324,10 +323,10 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCa
 
             {selectedImages.length > 0 && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {selectedImages.map((file, index) => (
+                {selectedImages.map((_, index) => (
                   <div key={index} className="relative">
                     <img
-                      src={URL.createObjectURL(file)}
+                      src={imageUrls[index]} // ✅ Use tracked URL instead of creating new one
                       alt={`Preview ${index + 1}`}
                       className="w-full h-24 object-cover rounded-lg"
                     />
@@ -335,6 +334,7 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCa
                       type="button"
                       onClick={() => removeImage(index)}
                       className="absolute -top-2 -right-2 bg-error-500 text-white rounded-full p-1 hover:bg-error-600"
+                      disabled={isMutating} // ✅ Disable during loading
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -351,16 +351,16 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCa
             type="button"
             variant="outline"
             onClick={onCancel}
-            disabled={isSubmitting}
+            disabled={isMutating}
           >
             Cancel
           </Button>
           <Button
             type="submit"
-            loading={isSubmitting}
-            disabled={isSubmitting}
+            loading={isMutating}
+            disabled={isMutating}
           >
-            {isSubmitting ? (
+            {isMutating ? (
               <>
                 <LoadingSpinner size="sm" />
                 Creating Event...

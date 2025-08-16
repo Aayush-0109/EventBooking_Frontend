@@ -1,22 +1,26 @@
 import React from 'react';
 import Container from '../components/layout/Container';
 import { CreateEventForm } from '../components/features/CreateEventForm';
-
+import { CreateEventData } from '../services';
+import useEventStore from '../store/eventStore';
+import { message } from 'antd';
+import { useNavigate } from 'react-router-dom';
 export const CreateEventPage: React.FC = () => {
-    const handleSubmit = async (data: any) => {
-        // Mock API call
-        console.log('Event creation data:', data);
+    const navigate = useNavigate()
+    const { createEvent } = useEventStore()
 
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        // Mock success response
-        alert('Event created successfully! Your event is now live on the platform.');
+    const handleSubmit = async (data: CreateEventData) => {
+        try {
+            await createEvent(data);
+        message.success("Event creation successful!");
+        navigate('/events')
+        } catch (error) {
+            
+        }
     };
 
     const handleCancel = () => {
-        // Mock navigation back
-        alert('Event creation cancelled');
+        navigate('/events')
     };
 
     return (
