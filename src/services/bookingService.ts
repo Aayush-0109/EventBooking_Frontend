@@ -8,15 +8,15 @@ import {
 
 class BookingService {
     static async getBookingById(id: number): Promise<ApiResponse<Registration>> {
-        const response = await get<Registration>(`/booking/${id}`);
+        const response = await get<Registration>(`/bookings/${id}`);
         return response.data;
     }
     static async getUserBookings(query?: RegistrationQuery): Promise<ApiResponse<RegistrationsResponse>> {
-        const response = await get<RegistrationsResponse>('/booking/get/my-bookings', { params: query });
+        const response = await get<RegistrationsResponse>('/bookings/get/my-bookings', { params: query });
         return response.data;
     }
     static async cancelBooking(id: number): Promise<ApiResponse<null>> {
-        const response = await del<null>(`/booking/${id}`);
+        const response = await del<null>(`/bookings/${id}`);
         return response.data;
     }
 

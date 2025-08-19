@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Button from '../ui/Button';
-import Input from '../ui/Input';
 import LoadingSpinner from '../ui/LoadingSpinner';
 import { FileText, Upload, X, Building, User } from 'lucide-react';
+import { CreateOrganizerRequestData } from '../../services';
+import useOrganizerRequestStore from '../../store/organizerRequestStore';
+import { message } from 'antd';
 
-// Organizer request schema matching backend exactly
 const organizerRequestSchema = z.object({
     overview: z.string()
         .min(5, "Overview must be at least 5 characters")
@@ -18,14 +19,16 @@ const organizerRequestSchema = z.object({
 type OrganizerRequestFormData = z.infer<typeof organizerRequestSchema>;
 
 interface OrganizerRequestFormProps {
-    onSubmit: (data: OrganizerRequestFormData & { resume: File | null }) => Promise<void>;
+    onSubmit: (data: CreateOrganizerRequestData) => Promise<void>;
     onCancel: () => void;
 }
 
 export const OrganizerRequestForm: React.FC<OrganizerRequestFormProps> = ({ onSubmit, onCancel }) => {
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const { isMutating ,error,clearError} = useOrganizerRequestStore()
     const [selectedResume, setSelectedResume] = useState<File | null>(null);
-
+useEffect(()=>{
+    clearError()
+},[clearError])
     const {
         register,
         handleSubmit,
@@ -39,27 +42,28 @@ export const OrganizerRequestForm: React.FC<OrganizerRequestFormProps> = ({ onSu
     });
 
     const handleFormSubmit = async (data: OrganizerRequestFormData) => {
-        setIsSubmitting(true);
-        try {
-            await onSubmit({ ...data, resume: selectedResume });
-        } catch (error) {
-            console.error('Organizer request failed:', error);
-        } finally {
-            setIsSubmitting(false);
+          if (!selectedResume) {
+            return message.warning("Resume is mandatory!")
         }
+        const completeData: CreateOrganizerRequestData = {
+            ...data,
+            resume: selectedResume
+        }
+        onSubmit(completeData)
     };
 
     const handleResumeUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
-            // Validate file type
+            console.log(file);
+
             if (!file.type.includes('pdf') && !file.type.includes('document')) {
-                alert('Please upload a PDF or document file');
+                message.warning('Please upload a PDF or document file');
                 return;
             }
             // Validate file size (5MB limit)
             if (file.size > 5 * 1024 * 1024) {
-                alert('File size must be less than 5MB');
+                message.warning('File size must be less than 5MB');
                 return;
             }
             setSelectedResume(file);
@@ -83,6 +87,11 @@ export const OrganizerRequestForm: React.FC<OrganizerRequestFormProps> = ({ onSu
             </div>
 
             <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+            {error && (
+                            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+                                <p className="text-sm font-medium">{error}</p>
+                            </div>
+                        )}
                 {/* Overview Section */}
                 <div>
                     <label className="block text-sm font-medium text-neutral-700 mb-2">
@@ -91,9 +100,8 @@ export const OrganizerRequestForm: React.FC<OrganizerRequestFormProps> = ({ onSu
                     <textarea
                         {...register('overview')}
                         rows={4}
-                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 ${
-                            errors.overview ? 'border-error-500' : 'border-neutral-300'
-                        }`}
+                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 ${errors.overview ? 'border-error-500' : 'border-neutral-300'
+                            }`}
                         placeholder="Tell us about your experience and why you want to become an organizer (5-100 characters)"
                         maxLength={100}
                     />
@@ -109,15 +117,15 @@ export const OrganizerRequestForm: React.FC<OrganizerRequestFormProps> = ({ onSu
                 <div>
                     <h3 className="text-lg font-semibold text-neutral-900 mb-4 flex items-center">
                         <FileText className="w-5 h-5 mr-2" />
-                        Resume/CV (Optional)
+                        Resume/CV
                     </h3>
-                    
+
                     <div className="space-y-4">
                         {!selectedResume ? (
                             <div className="border-2 border-dashed border-neutral-300 rounded-lg p-6 text-center">
                                 <input
                                     type="file"
-                                    accept=".pdf,.doc,.docx"
+                                    accept=".pdf"
                                     onChange={handleResumeUpload}
                                     className="hidden"
                                     id="resume-upload"
@@ -125,7 +133,7 @@ export const OrganizerRequestForm: React.FC<OrganizerRequestFormProps> = ({ onSu
                                 <label htmlFor="resume-upload" className="cursor-pointer">
                                     <Upload className="w-8 h-8 text-neutral-400 mx-auto mb-2" />
                                     <p className="text-neutral-600">Click to upload resume</p>
-                                    <p className="text-sm text-neutral-500">PDF, DOC, DOCX up to 5MB</p>
+                                    <p className="text-sm text-neutral-500">PDF up to 5MB</p>
                                 </label>
                             </div>
                         ) : (
@@ -173,16 +181,16 @@ export const OrganizerRequestForm: React.FC<OrganizerRequestFormProps> = ({ onSu
                         type="button"
                         variant="outline"
                         onClick={onCancel}
-                        disabled={isSubmitting}
+                        disabled={isMutating}
                     >
                         Cancel
                     </Button>
                     <Button
                         type="submit"
-                        loading={isSubmitting}
-                        disabled={isSubmitting}
+                        loading={isMutating}
+                        disabled={isMutating}
                     >
-                        {isSubmitting ? (
+                        {isMutating ? (
                             <>
                                 <LoadingSpinner size="sm" />
                                 Submitting Application...

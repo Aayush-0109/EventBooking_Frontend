@@ -9,7 +9,9 @@ import useEventStore from '../store/eventStore';
 import { useAuthStore } from '../store/authStore';
 import { message } from 'antd';
 import { isDevelopment } from '../config/environment';
+import { useLocation } from 'react-router-dom';
 export const EventDetailsPage: React.FC = () => {
+    const location = useLocation();
     const { id } = useParams<{ id: string }>();
     const eventId = Number(id);
     const navigate = useNavigate();
@@ -53,15 +55,15 @@ export const EventDetailsPage: React.FC = () => {
         }
     };
 
-    if(isLoading){
-        return(
+    if (isLoading) {
+        return (
             <Container>
                 <div className="flex items-center justify-center py-12">
-                <div className="text-center">
-                    <LoadingSpinner size="lg" />
-                    <p className="mt-4 text-neutral-600">Loading event details...</p>
+                    <div className="text-center">
+                        <LoadingSpinner size="lg" />
+                        <p className="mt-4 text-neutral-600">Loading event details...</p>
+                    </div>
                 </div>
-            </div>
             </Container>
         )
     }
@@ -84,7 +86,7 @@ export const EventDetailsPage: React.FC = () => {
         );
     }
 
-    else if (!currentEvent ) {
+    else if (!currentEvent) {
         return (
             <Container>
                 <div className="text-center py-12">
@@ -98,10 +100,10 @@ export const EventDetailsPage: React.FC = () => {
 
     return (
         <Container>
-             <div className="py-8">
+            <div className="py-8">
                 {/* Back Button */}
                 <button
-                    onClick={() => navigate('/events')}
+                    onClick={() => navigate(location.state.from)}
                     className="flex items-center text-neutral-600 hover:text-neutral-900 mb-6 transition-colors"
                 >
                     <ArrowLeft className="w-4 h-4 mr-2" />
@@ -114,14 +116,14 @@ export const EventDetailsPage: React.FC = () => {
                         {/* Event Images */}
                         <div className="space-y-4">
                             <div className="relative h-96 rounded-xl overflow-hidden">
-                                {(currentEvent.images && currentEvent.images.length>0) ? 
+                                {(currentEvent.images && currentEvent.images.length > 0) ?
                                     (<img
                                         src={currentEvent.images?.[currentImageIndex] || '/placeholder-event.jpg'}
                                         alt={currentEvent.title}
                                         className="w-full h-full object-cover"
                                     />) :
-                                    (<Calendar className="w-full h-full object-cover text-primary-600" />)    
-                            }
+                                    (<Calendar className="w-full h-full object-cover text-primary-600" />)
+                                }
                             </div>
 
                             {/* Image Thumbnails */}
@@ -182,7 +184,7 @@ export const EventDetailsPage: React.FC = () => {
                                 </div>
 
                                 <div className="space-y-4">
-                                      <div className="flex items-center space-x-3">
+                                    <div className="flex items-center space-x-3">
                                         <Users className="w-5 h-5 text-primary-600" />
                                         <div>
                                             <p className="font-medium text-neutral-900">Attendees</p>
@@ -193,7 +195,13 @@ export const EventDetailsPage: React.FC = () => {
                                     </div>
 
                                     <div className="flex items-center space-x-3">
-                                        <Clock className="w-5 h-5 text-primary-600" />
+                                        {currentEvent.user?.profileImage ?
+                                            (
+                                                <img src={currentEvent.user?.profileImage} alt={currentEvent.user?.name} className='w-5 h-5' />
+                                            ) : (
+                                                <Clock className="w-5 h-5 text-primary-600" />
+                                            )}
+
                                         <div>
                                             <p className="font-medium text-neutral-900">Organizer</p>
                                             <p className="text-neutral-600">{currentEvent.user?.name}</p>

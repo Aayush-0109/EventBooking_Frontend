@@ -1,131 +1,202 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   User,
   Calendar,
   MapPin,
-  Settings,
-  LogOut,
+  // Settings,
+  // LogOut,
   Edit,
   Eye,
-  Clock,
-  CheckCircle,
-  XCircle
+  ChevronRight,
+  ChevronLeft,
+  XCircle,
+  EyeOff,
+  Lock,
+  CheckCircle
 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Container from '../components/layout/Container';
-import EventCard from '../components/features/EventCard';
-import { Event } from '../types';
+import useBookingStore from '../store/bookingStore';
+import { useAuthStore } from '../store/authStore';
+import z from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { message } from 'antd';
 
-// Mock data for demonstration
-const mockUser = {
-  id: 1,
-  name: 'John Doe',
-  email: 'john.doe@example.com',
-  profileImage: null,
-  role: 'USER' as const,
-  createdAt: '2024-01-15T10:00:00Z',
-  updatedAt: '2024-01-15T10:00:00Z'
-};
+const profileSchema = z
+  .object({
+    name: z
+      .string()
+      .optional()
+      .refine((val) => {
+        // If name is empty/undefined, it's valid
+        if (!val || val.trim().length === 0) {
+          return true;
+        }
+        // If name is provided, apply length validation
+        return val.length >= 2 && val.length <= 50;
+      }, "Name must be at least 2 characters and maximum 50 characters"),
+    password: z
+      .string()
+      .optional()
+      .refine((val) => {
+        // If password is empty/undefined, it's valid
+        if (!val || val.trim().length === 0) {
+          return true;
+        }
+        // If password is provided, apply all validations
+        return val.length >= 8 &&
+          /[A-Z]/.test(val) &&
+          /[a-z]/.test(val) &&
+          /[0-9]/.test(val);
+      }, "Password must be at least 8 characters with uppercase, lowercase, and number"),
+    confirmPassword: z.string().optional(),
+  })
+  .refine((data) => {
+    // If password provided → confirmPassword must match
+    if (data.password && data.password.trim().length > 0) {
+      return data.password === data.confirmPassword;
+    }
+    return true; // skip when password is empty
+  });
 
-const mockBookings = [
-  {
-    id: '1',
-    event: {
-      id: 1,
-      title: 'Tech Conference 2024',
-      description: 'Annual technology conference featuring industry leaders',
-      date: '2024-02-15T09:00:00Z',
-      images: ['https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=500'],
-      registrations: [],
-      user: {
-        id: 1,
-        name: 'Tech Events Inc',
-        email: 'contact@techevents.com',
-        role: 'ORGANIZER' as const,
-        profileImage: null,
-        createdAt: '2024-01-01T00:00:00Z',
-        updatedAt: '2024-01-01T00:00:00Z'
-      },
-      longitude: -74.0060,
-      latitude: 40.7128,
-      address: 'Convention Center, Downtown',
-      city: 'New York',
-      state: 'NY',
-      country: 'USA',
-      postalCode: '10001',
-      createdBy: 1,
-      createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: '2024-01-01T00:00:00Z',
-    },
-    status: 'confirmed',
-    registeredAt: '2024-01-20T14:30:00Z'
-  },
-  {
-    id: '2',
-    event: {
-      id: 2,
-      title: 'Music Festival',
-      description: 'Three-day music festival with top artists',
-      date: '2024-03-20T18:00:00Z',
-      images: ['https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=500'],
-      registrations: [],
-      user: {
-        id: 2,
-        name: 'Music Productions',
-        email: 'info@musicprod.com',
-        role: 'ORGANIZER' as const,
-        profileImage: null,
-        createdAt: '2024-01-01T00:00:00Z',
-        updatedAt: '2024-01-01T00:00:00Z'
-      },
-      longitude: -73.9352,
-      latitude: 40.7589,
-      address: 'Central Park',
-      city: 'New York',
-      state: 'NY',
-      country: 'USA',
-      postalCode: '10023',
-      createdBy: 2,
-      createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: '2024-01-01T00:00:00Z',
-    },
-    status: 'pending',
-    registeredAt: '2024-01-25T11:15:00Z'
-  }
-];
+type ProfileFormData = z.infer<typeof profileSchema>;
 
 export const UserDashboard: React.FC = () => {
+  const { user, updateProfile, isMutating, error, clearError} = useAuthStore()
+  const { fetchUserBookings, userBookings, pagination, isLoading } = useBookingStore()
   const [activeTab, setActiveTab] = useState<'profile' | 'bookings' | 'settings'>('profile');
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordsMatch, setPasswordsMatch] = useState(false);
+  const [confirmPasswordTouched, setConfirmPasswordTouched] = useState(false);
+
   const navigate = useNavigate();
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'confirmed':
-        return <CheckCircle className="w-5 h-5 text-success-500" />;
-      case 'pending':
-        return <Clock className="w-5 h-5 text-warning-500" />;
-      case 'cancelled':
-        return <XCircle className="w-5 h-5 text-error-500" />;
-      default:
-        return <Clock className="w-5 h-5 text-neutral-500" />;
+  useEffect(() => {
+    clearError()
+  }, [clearError])
+
+  useEffect(() => {
+    (async () => {
+      try {
+        await fetchUserBookings({})
+      } catch (error) {
+
+      }
+    })()
+  }, [fetchUserBookings])
+
+  const { register, watch, handleSubmit, formState: { errors }, reset } = useForm<ProfileFormData>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      name: "",  // Set to empty string if no user name
+      password: "",
+      confirmPassword: ""
+    },
+    mode: 'onChange'
+  })
+
+  const onSubmit = async (data: ProfileFormData) => {
+    const payload: Record<string, string> = {};
+
+    // Only add name if it's provided and different from current
+    if (data.name && data.name.trim().length > 0 && data.name !== user?.name) {
+      payload.name = data.name;
     }
+
+    // Only add password if it's provided
+    if (data.password && data.password.trim().length > 0) {
+      if (data.password !== data.confirmPassword) {
+        message.error("Passwords must match before submitting");
+        return;
+      }
+      payload.password = data.password;
+    }
+
+    // Check if there are any changes to submit
+    if (Object.keys(payload).length === 0) {
+      message.info("No changes made");
+      return;
+    }
+
+    await updateProfile(payload);
+
+    if (!useAuthStore.getState().error) {
+      message.success("Profile updated successfully!");
+      reset({ name: "", password: "", confirmPassword: "" });
+      setIsEditing(false);
+    }
+  }
+
+  const password = watch("password")
+  const confirmPassword = watch("confirmPassword")
+
+  useEffect(() => {
+    if (password && confirmPassword) {
+      setPasswordsMatch(password === confirmPassword);
+    } else {
+      setPasswordsMatch(false);
+    }
+  }, [password, confirmPassword]);
+
+  // Update the form validation logic - at least one field must be filled
+  const isFormValid = () => {
+    const currentName = watch("name");
+    const currentPassword = watch("password");
+
+    // At least one field must have content
+    const hasNameChange = currentName && currentName.trim().length > 0 && currentName !== user?.name;
+    const hasPasswordChange = currentPassword && currentPassword.trim().length > 0;
+
+    // Must have at least one change
+    if (!hasNameChange && !hasPasswordChange) {
+      return false;
+    }
+
+    // If password is provided, it must match confirmPassword
+    if (hasPasswordChange) {
+      return passwordsMatch;
+    }
+
+    return true;
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'confirmed':
-        return 'bg-success-100 text-success-700';
-      case 'pending':
-        return 'bg-warning-100 text-warning-700';
-      case 'cancelled':
-        return 'bg-error-100 text-error-700';
-      default:
-        return 'bg-neutral-100 text-neutral-700';
+  const { currentPage, totalPages, totalItems } = pagination.userBookings
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      fetchUserBookings({ page: newPage });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  }
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisible = 5;
+    let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let end = Math.min(totalPages, start + maxVisible - 1);
+
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
   };
+
+  // const handleLogout = async () => {
+  //   await logout();
+  //   if (!useAuthStore.getState().error) {
+  //     message.success("Logout Successful!");
+  //     navigate('/');
+  //   }
+  // };
 
   return (
     <Container>
@@ -141,8 +212,10 @@ export const UserDashboard: React.FC = () => {
           <nav className="flex space-x-8">
             {[
               { id: 'profile', label: 'Profile', icon: User },
-              { id: 'bookings', label: 'My Bookings', icon: Calendar },
-              { id: 'settings', label: 'Settings', icon: Settings }
+              ...(user?.role !== "ADMIN"
+                ? [{ id: "bookings", label: "My Bookings", icon: Calendar }]
+                : []),
+              // { id: 'settings', label: 'Settings', icon: Settings }
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -165,61 +238,190 @@ export const UserDashboard: React.FC = () => {
           {activeTab === 'profile' && (
             <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
               <div className="flex justify-between items-start mb-6">
-                <h2 className="text-xl font-semibold text-neutral-900">Profile Information</h2>
+                <h2 className="text-xl font-semibold text-neutral-900">
+                  Profile Information
+                </h2>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setIsEditingProfile(!isEditingProfile)}
+                  onClick={() => setIsEditing(!isEditing)}
+                  disabled={isMutating}
                 >
                   <Edit className="w-4 h-4 mr-2" />
-                  {isEditingProfile ? 'Cancel' : 'Edit Profile'}
+                  {isEditing ? "Cancel" : "Edit Profile"}
                 </Button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
-                    Full Name
-                  </label>
-                  <Input
-                    value={mockUser.name}
-                    disabled={!isEditingProfile}
-                    className={!isEditingProfile ? 'bg-neutral-50' : ''}
-                  />
+              {/* Display Mode */}
+              {!isEditing ? (
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-neutral-600">Name</label>
+                    <p className="text-lg text-neutral-900">{user?.name}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-neutral-600">Email</label>
+                    <p className="text-lg text-neutral-900">{user?.email}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-neutral-600">Role</label>
+                    <p className="text-lg text-neutral-900 capitalize">{user?.role?.toLowerCase()}</p>
+                  </div>
                 </div>
+              ) : (
+                /* Edit Mode */
+                <div className="max-w-md">
+                  {error && (
+                    <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-sm text-red-600">{error}</p>
+                    </div>
+                  )}
 
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
-                    Email Address
-                  </label>
-                  <Input
-                    type="email"
-                    value={mockUser.email}
-                    disabled={!isEditingProfile}
-                    className={!isEditingProfile ? 'bg-neutral-50' : ''}
-                  />
-                </div>
+                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                    {/* Name field - make it truly optional */}
+                    <Input
+                      label="Full Name (leave blank to keep current)"
+                      {...register("name")}
+                      error={errors.name?.message}
+                      leftIcon={User}
+                      placeholder="Enter your name"
+                      disabled={isMutating}
+                    />
 
+                    {/* Password */}
+                    <div className="relative">
+                      <Input
+                        label="New Password (leave blank to keep current)"
+                        type={showPassword ? "text" : "password"}
+                        {...register("password")}
+                        error={errors.password?.message}
+                        leftIcon={Lock}
+                        placeholder="Enter new password"
+                        disabled={isMutating}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-[38px] text-neutral-400 hover:text-neutral-600 transition-colors"
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
 
+                    {/* Confirm Password */}
+                    {password && (
+                      <div className="relative">
+                        <Input
+                          label="Confirm Password"
+                          type={showConfirmPassword ? "text" : "password"}
+                          {...register("confirmPassword", {
+                            onBlur: () => setConfirmPasswordTouched(true),
+                          })}
+                          error={errors.confirmPassword?.message}
+                          leftIcon={Lock}
+                          placeholder="Confirm your password"
+                          disabled={isMutating}
+                          className={`${confirmPasswordTouched && confirmPassword
+                            ? passwordsMatch
+                              ? "border-green-300 focus:border-green-500"
+                              : "border-red-300 focus:border-red-500"
+                            : ""
+                            }`}
+                        />
 
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
-                    Member Since
-                  </label>
-                  <Input
-                    value={new Date(mockUser.createdAt).toLocaleDateString()}
-                    disabled
-                    className="bg-neutral-50"
-                  />
-                </div>
-              </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute right-10 top-[38px] text-neutral-400 hover:text-neutral-600 transition-colors"
+                          aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                        >
+                          {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
 
-              {isEditingProfile && (
-                <div className="flex space-x-3 mt-6 pt-6 border-t">
-                  <Button>Save Changes</Button>
-                  <Button variant="outline" onClick={() => setIsEditingProfile(false)}>
-                    Cancel
-                  </Button>
+                        {confirmPasswordTouched && confirmPassword && (
+                          <div className="absolute right-3 top-[38px]">
+                            {passwordsMatch ? (
+                              <CheckCircle className="w-4 h-4 text-green-500" />
+                            ) : (
+                              <XCircle className="w-4 h-4 text-red-500" />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {confirmPasswordTouched && confirmPassword && (
+                      <div
+                        className={`text-sm transition-colors ${passwordsMatch ? "text-green-600" : "text-red-600"
+                          }`}
+                      >
+                        {passwordsMatch ? (
+                          <span className="flex items-center">
+                            <CheckCircle className="w-4 h-4 mr-1" />
+                            Passwords match!
+                          </span>
+                        ) : (
+                          <span className="flex items-center">
+                            <XCircle className="w-4 h-4 mr-1" />
+                            Passwords don't match
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Password Requirements */}
+                    {password && (
+                      <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-4">
+                        <h4 className="font-medium text-neutral-900 mb-2">
+                          Password Requirements:
+                        </h4>
+                        <ul className="text-sm text-neutral-600 space-y-1">
+                          <li>• Minimum 8 characters</li>
+                          <li>• At least one uppercase letter (A-Z)</li>
+                          <li>• At least one lowercase letter (a-z)</li>
+                          <li>• At least one number (0-9)</li>
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Submit */}
+                    <div className="flex gap-3">
+                      <Button
+                        type="submit"
+                        className="flex-1"
+                        size="md"
+                        loading={isMutating}
+                        disabled={isMutating || !isFormValid()}
+                      >
+                        Save Changes
+                      </Button>
+                      {/* Show message when no fields are filled */}
+                      {!isFormValid() && !isMutating && (
+                        <p className="text-sm text-neutral-500 text-center">
+                          Please fill in at least one field (name or password) to continue
+                        </p>
+                      )}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="md"
+                        onClick={() => {
+                          setIsEditing(false);
+                          reset({
+                            name: user?.name || "",
+                            password: "",
+                            confirmPassword: ""
+                          });
+                          setPasswordsMatch(false);
+                          setConfirmPasswordTouched(false);
+                        }}
+                        disabled={isMutating}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
                 </div>
               )}
             </div>
@@ -231,88 +433,153 @@ export const UserDashboard: React.FC = () => {
               <div className="flex justify-between items-center">
                 <h2 className="text-xl font-semibold text-neutral-900">My Bookings</h2>
                 <div className="text-sm text-neutral-500">
-                  {mockBookings.length} booking{mockBookings.length !== 1 ? 's' : ''}
+                  {userBookings.length} booking{userBookings.length !== 1 ? 's' : ''}
                 </div>
               </div>
 
-              {mockBookings.length === 0 ? (
-                <div className="text-center py-12">
+              {userBookings.length === 0 ? (
+                <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-12 text-center">
                   <Calendar className="w-12 h-12 text-neutral-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-neutral-900 mb-2">No bookings yet</h3>
                   <p className="text-neutral-600 mb-4">
                     Start exploring events and make your first booking!
                   </p>
-                  <Button>Browse Events</Button>
+                  <Button onClick={() => navigate('/events')}>Browse Events</Button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {mockBookings.map((booking) => (
-                    <div
-                      key={booking.id}
-                      className="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden"
-                    >
-                      <div className="relative h-48">
-                        <img
-                          src={booking.event.images?.[0] || '/placeholder-event.jpg'}
-                          alt={booking.event.title}
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute top-4 right-4">
-                          <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(booking.status)}`}>
-                            {booking.status}
-                          </span>
+                <>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {userBookings.map((booking) => (
+                      <div
+                        key={booking.id}
+                        className="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden hover:shadow-md transition-shadow"
+                      >
+                        <div className="h-48 bg-gradient-to-br from-primary-200 to-primary-300 flex items-center justify-center">
+                          {booking.event?.images && typeof booking.event.images === 'string' ? (
+                            <img
+                              src={booking.event.images}
+                              alt={booking.event.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <Calendar className="w-12 h-12 text-primary-600" />
+                          )}
+                        </div>
+
+                        <div className="p-6">
+                          <h3 className="text-lg font-semibold text-neutral-900 mb-2">
+                            {booking.event?.title}
+                          </h3>
+
+                          <div className="space-y-2 mb-4">
+                            <div className="flex items-center space-x-2 text-sm text-neutral-600">
+                              <Calendar className="w-4 h-4" />
+                              <span>
+                                {booking.event ?
+                                  (new Date(booking.event.date).toLocaleDateString('en-US', {
+                                    weekday: 'short',
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric'
+                                  })) :
+                                  "Date not available"
+                                }
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-2 text-sm text-neutral-600">
+                              <MapPin className="w-4 h-4" />
+                              <span>{booking.event?.city}, {booking.event?.state}</span>
+                            </div>
+                            <div className="text-sm text-neutral-500">
+                              Booked on {new Date(booking.createdAt).toLocaleDateString()}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            {/* <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => navigate(`/events/${booking.event?.id}`)}
+                            >
+                              
+                              View Details
+                            </Button> */}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => navigate(`/booking/${booking.id}`)}
+                            >
+                              <Eye className="w-4 h-4 mr-2" />
+                              Booking Details
+                            </Button>
+                          </div>
                         </div>
                       </div>
+                    ))}
+                  </div>
 
-                      <div className="p-6">
-                        <h3 className="text-lg font-semibold text-neutral-900 mb-2">
-                          {booking.event.title}
-                        </h3>
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between border-t border-neutral-200 pt-6 mt-6">
+                      {/* Info */}
+                      <div className="text-sm text-neutral-700">
+                        Page {currentPage} of {totalPages} • {totalItems} total bookings
+                      </div>
 
-                        <div className="space-y-2 mb-4">
-                          <div className="flex items-center space-x-2 text-sm text-neutral-600">
-                            <Calendar className="w-4 h-4" />
-                            <span>
-                              {new Date(booking.event.date).toLocaleDateString('en-US', {
-                                weekday: 'short',
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric'
-                              })}
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-2 text-sm text-neutral-600">
-                            <MapPin className="w-4 h-4" />
-                            <span>{booking.event.city}, {booking.event.state}</span>
-                          </div>
+                      {/* Buttons */}
+                      <div className="flex items-center space-x-2">
+                        {/* Prev */}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handlePageChange(currentPage - 1)}
+                          disabled={currentPage === 1 || isLoading}
+                        >
+                          <ChevronLeft className="w-4 h-4 mr-1" />
+                          Previous
+                        </Button>
+
+                        {/* Page Numbers */}
+                        <div className="hidden sm:flex space-x-1">
+                          {getPageNumbers().map((pageNum) => (
+                            <Button
+                              key={pageNum}
+                              variant={pageNum === currentPage ? "primary" : "ghost"}
+                              size="sm"
+                              onClick={() => handlePageChange(pageNum)}
+                              disabled={isLoading}
+                              className="min-w-10"
+                            >
+                              {pageNum}
+                            </Button>
+                          ))}
                         </div>
 
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            {getStatusIcon(booking.status)}
-                            <span className="text-sm text-neutral-600">
-                              Booked on {new Date(booking.registeredAt).toLocaleDateString()}
-                            </span>
-                          </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => navigate(`/events/${booking.event.id}`)}
-                          >
-                            <Eye className="w-4 h-4 mr-2" />
-                            View Details
-                          </Button>
+                        {/* Mobile Info */}
+                        <div className="sm:hidden text-sm text-neutral-600">
+                          {currentPage} / {totalPages}
                         </div>
+
+                        {/* Next */}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handlePageChange(currentPage + 1)}
+                          disabled={currentPage === totalPages || isLoading}
+                        >
+                          Next
+                          <ChevronRight className="w-4 h-4 ml-1" />
+                        </Button>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  )}
+                </>
               )}
             </div>
           )}
 
           {/* Settings Tab */}
-          {activeTab === 'settings' && (
+          {/* {activeTab === 'settings' && (
             <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
               <h2 className="text-xl font-semibold text-neutral-900 mb-6">Account Settings</h2>
 
@@ -351,14 +618,14 @@ export const UserDashboard: React.FC = () => {
                 </div>
 
                 <div className="border-t pt-6">
-                  <Button variant="danger" size="lg" onClick={() => alert('Logout logic goes here')}>
+                  <Button variant="danger" size="lg" onClick={handleLogout}>
                     <LogOut className="w-4 h-4 mr-2" />
                     Sign Out
                   </Button>
                 </div>
               </div>
             </div>
-          )}
+          )} */}
         </div>
       </div>
     </Container>

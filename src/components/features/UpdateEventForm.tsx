@@ -5,119 +5,111 @@ import { z } from 'zod';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import LoadingSpinner from '../ui/LoadingSpinner';
-import { Calendar, MapPin, Upload, X } from 'lucide-react';
+import { Calendar, MapPin } from 'lucide-react';
 import useEventStore from '../../store/eventStore';
+import { Event } from '../../services';
 import { isDevelopment } from '../../config/environment';
-// Form validation schema (for React Hook Form)
-const createEventFormSchema = z.object({
+
+// Form validation schema for updates (all fields optional)
+const updateEventFormSchema = z.object({
   title: z.string()
     .min(3, "Title must have at least 3 characters")
     .max(100, "Title cannot exceed 100 characters")
-    .trim(),
+    .trim()
+    .optional(),
   description: z.string()
     .min(10, "Description must have at least 10 characters")
     .max(1000, "Description cannot exceed 1000 characters")
-    .trim(),
+    .trim()
+    .optional(),
   date: z
     .string()
     .min(1, "Date is required")
-    .refine(date => new Date(date) > new Date(), "Event date must be in future"),
+    .refine(date => new Date(date) > new Date(), "Event date must be in future")
+    .optional(),
   longitude: z.number()
     .min(-180, "Invalid longitude")
-    .max(180, "Invalid longitude"),
+    .max(180, "Invalid longitude")
+    .optional(),
   latitude: z.number()
     .min(-85.05112878, "Invalid latitude")
-    .max(85.05112878, "Invalid latitude"),
-  address: z.string().min(5, "Complete address is required"),
-  city: z.string().min(2, "City is required"),
-  state: z.string().min(2, "State/Province is required"),
-  country: z.string().min(2, "Country is required"),
-  postalCode: z.string().min(3, "Postal code is required"),
-});
+    .max(85.05112878, "Invalid latitude")
+    .optional(),
+  address: z.string().min(5, "Complete address is required").optional(),
+  city: z.string().min(2, "City is required").optional(),
+  state: z.string().min(2, "State/Province is required").optional(),
+  country: z.string().min(2, "Country is required").optional(),
+  postalCode: z.string().min(3, "Postal code is required").optional(),
+}).refine(data => {
+  // At least one field must be provided
+  const hasAnyField = Object.values(data).some(value => value !== undefined && value !== '');
 
+  // If updating location, all address fields must be provided together
+  const addressFields = [data.address, data.city, data.state, data.country, data.postalCode];
+  const hasAnyAddressField = addressFields.some(field => field !== undefined && field !== '');
+  const hasAllAddressFields = addressFields.every(field => field !== undefined && field !== '');
 
+  // If updating coordinates, both must be provided
+  const hasAnyGeoField = data.longitude !== undefined || data.latitude !== undefined;
+  const hasAllGeoFields = data.longitude !== undefined && data.latitude !== undefined;
 
+  if (hasAnyAddressField && !hasAllAddressFields) {
+    return false;
+  }
+  if (hasAnyGeoField && !hasAllGeoFields) {
+    return false;
+  }
 
+  return hasAnyField;
+}, "At least one field must be provided. If updating location, all address fields must be provided together. If updating coordinates, both latitude and longitude must be provided.");
 
+type UpdateEventFormData = z.infer<typeof updateEventFormSchema>;
 
-// Validated data type (after schema validation)
-type CreateEventFormData = z.infer<typeof createEventFormSchema>;  // ✅ Use same schema
-type CompleteSubmissionData = CreateEventFormData & { images: File[] };
-interface CreateEventFormProps {
-  onSubmit: (data: CompleteSubmissionData) => Promise<void>;
+interface UpdateEventFormProps {
+  event: Event;
+  onSubmit: (data: UpdateEventFormData) => Promise<void>;
   onCancel: () => void;
 }
 
-export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCancel }) => {
-  const { isMutating, error, clearError } = useEventStore()
-  const [selectedImages, setSelectedImages] = useState<File[]>([]);
-  const [imageUrls, setImageUrls] = useState<string[]>([]);
+export const UpdateEventForm: React.FC<UpdateEventFormProps> = ({ event, onSubmit, onCancel }) => {
+  const { isMutating, error, clearError } = useEventStore();
+
   const {
     register,
     handleSubmit,
     formState: { errors },
     setValue,
-  } = useForm<CreateEventFormData>({
-    resolver: zodResolver(createEventFormSchema),
+  } = useForm<UpdateEventFormData>({
+    resolver: zodResolver(updateEventFormSchema),
     defaultValues: {
-      title: '',
-      description: '',
-      date: '',
-      longitude: 0,
-      latitude: 0,
-      address: '',
-      city: '',
-      state: '',
-      country: '',
-      postalCode: '',
+      title: event.title,
+      description: event.description,
+      date: new Date(event.date).toISOString().slice(0, 16), // Format for datetime-local input
+      longitude: event.longitude,
+      latitude: event.latitude,
+      address: event.address,
+      city: event.city,
+      state: event.state,
+      country: event.country,
+      postalCode: event.postalCode,
     }
   });
-  useEffect(() => {
-    clearError()
-  }, [clearError])
 
   useEffect(() => {
-    return () => {
-      imageUrls.forEach(url => URL.revokeObjectURL(url));
-    };
-  }, [imageUrls]);
+    clearError();
+  }, [clearError]);
 
-  const handleFormSubmit = async (data: CreateEventFormData) => {
+  const handleFormSubmit = async (data: UpdateEventFormData) => {
     try {
-
-      const completeData: CompleteSubmissionData = {
-        ...data,
-        images: selectedImages
-      }
-      console.log(completeData);
-      
-      await onSubmit(completeData);
+      await onSubmit(data);
     } catch (error) {
-      if (isDevelopment())
-        console.error('Event creation failed:', error);
-
-    };
-  }
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    const newUrls = files.map(file => URL.createObjectURL(file));
-
-    setSelectedImages(prev => [...prev, ...files]);
-    setImageUrls(prev => [...prev, ...newUrls]);
-  };
-
-  const removeImage = (index: number) => {
-    setSelectedImages(prev => prev.filter((_, i) => i !== index));
-    setImageUrls(prev => {
-      const newUrls = prev.filter((_, i) => i !== index);
-      URL.revokeObjectURL(prev[index]);
-      return newUrls;
-    });
+      if (isDevelopment()) {
+        console.error('Event update failed:', error);
+      }
+    }
   };
 
   const handleLocationSelect = () => {
-
-
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -136,8 +128,8 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCa
   return (
     <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-neutral-900 mb-2">Create New Event</h2>
-        <p className="text-neutral-600">Fill in the details below to create your event</p>
+        <h2 className="text-2xl font-bold text-neutral-900 mb-2">Update Event</h2>
+        <p className="text-neutral-600">Modify the fields you want to update. Leave fields unchanged to keep current values.</p>
       </div>
 
       {error && (
@@ -164,7 +156,6 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCa
               {...register('title')}
               error={errors.title?.message}
               placeholder="Enter event title (3-100 characters)"
-              required
             />
           </div>
 
@@ -191,7 +182,6 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCa
               {...register('date')}
               error={errors.date?.message}
               leftIcon={Calendar}
-              required
             />
           </div>
         </div>
@@ -210,7 +200,6 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCa
                 {...register('address')}
                 error={errors.address?.message}
                 placeholder="Complete street address"
-                required
               />
             </div>
 
@@ -220,7 +209,6 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCa
                 {...register('city')}
                 error={errors.city?.message}
                 placeholder="City name"
-                required
               />
             </div>
 
@@ -230,7 +218,6 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCa
                 {...register('state')}
                 error={errors.state?.message}
                 placeholder="State or province"
-                required
               />
             </div>
 
@@ -240,7 +227,6 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCa
                 {...register('country')}
                 error={errors.country?.message}
                 placeholder="Country name"
-                required
               />
             </div>
 
@@ -250,7 +236,6 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCa
                 {...register('postalCode')}
                 error={errors.postalCode?.message}
                 placeholder="Postal/ZIP code"
-                required
               />
             </div>
 
@@ -297,55 +282,6 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCa
           </div>
         </div>
 
-        {/* Image Upload */}
-        <div className="border-t pt-6">
-          <h3 className="text-lg font-semibold text-neutral-900 mb-4 flex items-center">
-            <Upload className="w-5 h-5 mr-2" />
-            Event Images
-          </h3>
-
-          <div className="space-y-4">
-            <div className="border-2 border-dashed border-neutral-300 rounded-lg p-6 text-center">
-              <input
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-                id="image-upload"
-                disabled={isMutating}
-              />
-              <label htmlFor="image-upload" className="cursor-pointer">
-                <Upload className="w-8 h-8 text-neutral-400 mx-auto mb-2" />
-                <p className="text-neutral-600">Click to upload images</p>
-                <p className="text-sm text-neutral-500">PNG, JPG, JPEG up to 5MB each</p>
-              </label>
-            </div>
-
-            {selectedImages.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {selectedImages.map((_, index) => (
-                  <div key={index} className="relative">
-                    <img
-                      src={imageUrls[index]} // ✅ Use tracked URL instead of creating new one
-                      alt={`Preview ${index + 1}`}
-                      className="w-full h-24 object-cover rounded-lg"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeImage(index)}
-                      className="absolute -top-2 -right-2 bg-error-500 text-white rounded-full p-1 hover:bg-error-600"
-                      disabled={isMutating} // ✅ Disable during loading
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
         {/* Form Actions */}
         <div className="flex justify-end space-x-3 pt-6 border-t">
           <Button
@@ -364,14 +300,14 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCa
             {isMutating ? (
               <>
                 <LoadingSpinner size="sm" />
-                Creating Event...
+                Updating Event...
               </>
             ) : (
-              'Create Event'
+              'Update Event'
             )}
           </Button>
         </div>
       </form>
     </div>
   );
-}; 
+};

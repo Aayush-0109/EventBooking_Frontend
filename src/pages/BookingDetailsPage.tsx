@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
     Calendar,
     MapPin,
@@ -11,75 +11,55 @@ import {
 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Container from '../components/layout/Container';
-import { Registration } from '../types';
+import useBookingStore from '../store/bookingStore';
+import { message } from 'antd';
 
 // Mock booking data - matches backend schema exactly
-const mockBooking: Registration = {
-    id: 1,
-    userId: 101,
-    eventId: 1,
-    registeredAt: '2024-01-15T10:30:00Z',
-    user: {
-        id: 101,
-        name: 'John Doe',
-        email: 'john.doe@example.com',
-        role: 'USER' as const,
-        profileImage: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
-        createdAt: '2024-01-01T00:00:00Z',
-        updatedAt: '2024-01-01T00:00:00Z'
-    },
-    event: {
-        id: 1,
-        title: 'Tech Conference 2024',
-        description: 'Join us for the biggest technology conference of the year! This event brings together industry leaders, innovators, and tech enthusiasts for three days of inspiring talks, workshops, and networking opportunities. Learn about the latest trends in AI, blockchain, cloud computing, and more.',
-        date: '2024-02-15T09:00:00Z',
-        images: [
-            'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800',
-            'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800'
-        ],
-        registrations: [],
-        user: {
-            id: 1,
-            name: 'Tech Events Inc',
-            email: 'contact@techevents.com',
-            role: 'ORGANIZER' as const,
-            profileImage: null,
-            createdAt: '2024-01-01T00:00:00Z',
-            updatedAt: '2024-01-01T00:00:00Z'
-        },
-        longitude: -74.0060,
-        latitude: 40.7128,
-        address: '123 Convention Center Blvd',
-        city: 'New York',
-        state: 'NY',
-        country: 'USA',
-        postalCode: '10001',
-        createdBy: 1,
-        createdAt: '2024-01-01T00:00:00Z',
-        updatedAt: '2024-01-01T00:00:00Z'
-    }
-};
+
 
 const BookingDetailsPage: React.FC = () => {
+    const { id } = useParams<{ id: string }>()
+    const bookingId = Number(id)
     const navigate = useNavigate();
-    const [booking] = useState(mockBooking);
-    const [loading] = useState(false);
-    const [cancelling, setCancelling] = useState(false);
+    const { isLoading, fetchBookingById, error, clearError, cancelBooking, currentBooking, isMutating } = useBookingStore()
+
+    useEffect(() => {
+        clearError()
+    }, [clearError])
+
+    useEffect(() => {
+        (async () => {
+            try {
+                await fetchBookingById(bookingId)
+
+            } catch (error) {
+
+            }
+        })()
+    }, [bookingId, fetchBookingById])
 
     const handleCancel = async () => {
-        setCancelling(true);
-        // Mock cancellation
-        setTimeout(() => {
-            setCancelling(false);
-            alert('Booking cancelled successfully (mock action)');
-        }, 1000);
+        try {
+            if (currentBooking?.id) {
+                await cancelBooking(currentBooking?.id)
+
+            }
+            else {
+                message.error("Booking not found!")
+
+            }
+            navigate('/dashboard')
+
+        } catch (error) {
+
+        }
     };
 
     const handleBack = () => {
         navigate('/dashboard');
     };
 
-    if (loading) {
+    if (isLoading) {
         return (
             <Container>
                 <div className="py-8 text-center">
@@ -89,7 +69,7 @@ const BookingDetailsPage: React.FC = () => {
         );
     }
 
-    if (!booking) {
+    if (!currentBooking) {
         return (
             <Container>
                 <div className="py-8 text-center">
@@ -100,10 +80,10 @@ const BookingDetailsPage: React.FC = () => {
             </Container>
         );
     }
-
-    const isUpcoming = new Date(booking.event.date) > new Date();
-    const eventDate = new Date(booking.event.date);
-    const registrationDate = new Date(booking.registeredAt);
+    if (!currentBooking.event) return (<></>)
+    const isUpcoming = new Date(currentBooking.event?.date) > new Date();
+    const eventDate = new Date(currentBooking.event?.date);
+    const registrationDate = new Date(currentBooking.createdAt);
 
     return (
         <Container>
@@ -118,13 +98,20 @@ const BookingDetailsPage: React.FC = () => {
                     Back to Dashboard
                 </Button>
 
+                {/* Error Display - Consistent with project styling */}
+                {error && (
+                    <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <p className="text-sm text-red-600">{error}</p>
+                    </div>
+                )}
+
                 <div className="max-w-4xl mx-auto">
                     {/* Header */}
                     <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 mb-6">
                         <div className="flex items-start justify-between">
                             <div>
                                 <h1 className="text-2xl font-bold text-neutral-900 mb-2">Booking Details</h1>
-                                <p className="text-neutral-600">Registration ID: #{booking.id}</p>
+                                <p className="text-neutral-600">Registration ID: #{currentBooking.id}</p>
                             </div>
                             <div className="text-right">
                                 <div className={`px-3 py-1 rounded-full text-sm font-medium ${isUpcoming ? 'bg-success-100 text-success-700' : 'bg-neutral-100 text-neutral-700'
@@ -141,20 +128,22 @@ const BookingDetailsPage: React.FC = () => {
                             <h2 className="text-xl font-semibold text-neutral-900 mb-4">Event Information</h2>
 
                             {/* Event Image */}
-                            {booking.event.images.length > 0 && (
-                                <div className="mb-4">
+                            <div className="h-48 bg-gradient-to-br from-primary-200 to-primary-300 flex items-center justify-center">
+                                {currentBooking.event.images && !Array.isArray(currentBooking.event.images) ? (
                                     <img
-                                        src={booking.event.images[0]}
-                                        alt={booking.event.title}
-                                        className="w-full h-48 object-cover rounded-lg"
+                                        src={currentBooking.event.images}
+                                        alt={currentBooking.event.title}
+                                        className="w-full h-full object-cover"
                                     />
-                                </div>
-                            )}
+                                ) : (
+                                    <Calendar className="w-12 h-12 text-primary-600" />
+                                )}
+                            </div>
 
                             <div className="space-y-4">
                                 <div>
-                                    <h3 className="font-semibold text-neutral-900 text-lg">{booking.event.title}</h3>
-                                    <p className="text-neutral-600 text-sm mt-1">{booking.event.description}</p>
+                                    <h3 className="font-semibold text-neutral-900 text-lg">{currentBooking.event.title}</h3>
+                                    <p className="text-neutral-600 text-sm mt-1">{currentBooking.event.description}</p>
                                 </div>
 
                                 <div className="flex items-center text-neutral-600">
@@ -180,19 +169,19 @@ const BookingDetailsPage: React.FC = () => {
                                 <div className="flex items-start text-neutral-600">
                                     <MapPin className="w-4 h-4 mr-3 mt-0.5" />
                                     <div>
-                                        <div className="font-medium">{booking.event.address}</div>
+                                        <div className="font-medium">{currentBooking.event.address}</div>
                                         <div className="text-sm">
-                                            {booking.event.city}, {booking.event.state} {booking.event.postalCode}
+                                            {currentBooking.event.city}, {currentBooking.event.state} {currentBooking.event.postalCode}
                                         </div>
-                                        <div className="text-sm">{booking.event.country}</div>
+                                        <div className="text-sm">{currentBooking.event.country}</div>
                                     </div>
                                 </div>
 
                                 <div className="flex items-center text-neutral-600">
                                     <User className="w-4 h-4 mr-3" />
                                     <div>
-                                        <div className="font-medium">Organized by {booking.event.user.name}</div>
-                                        <div className="text-sm">{booking.event.user.email}</div>
+                                        <div className="font-medium">Organized by {currentBooking.event?.user?.name}</div>
+                                        <div className="text-sm">{currentBooking.event?.user?.email}</div>
                                     </div>
                                 </div>
                             </div>
@@ -226,8 +215,8 @@ const BookingDetailsPage: React.FC = () => {
                                         <User className="w-4 h-4 mr-3 mt-0.5" />
                                         <div>
                                             <div className="font-medium">Registered User</div>
-                                            <div className="text-sm">{booking.user.name}</div>
-                                            <div className="text-sm">{booking.user.email}</div>
+                                            <div className="text-sm">{currentBooking.user?.name}</div>
+                                            <div className="text-sm">{currentBooking.user?.email}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -241,7 +230,7 @@ const BookingDetailsPage: React.FC = () => {
                                     <Button
                                         variant="outline"
                                         className="w-full justify-start"
-                                        onClick={() => navigate(`/events/${booking.event.id}`)}
+                                        onClick={() => navigate(`/events/${currentBooking.event?.id}`,{state: {from : location.pathname}})}
                                     >
                                         <ExternalLink className="w-4 h-4 mr-2" />
                                         View Event Details
@@ -261,8 +250,8 @@ const BookingDetailsPage: React.FC = () => {
                                             variant="outline"
                                             className="w-full justify-start text-error-600 border-error-200 hover:bg-error-50"
                                             onClick={handleCancel}
-                                            loading={cancelling}
-                                            disabled={cancelling}
+                                            loading={isMutating}
+                                            disabled={isMutating}
                                         >
                                             Cancel Registration
                                         </Button>

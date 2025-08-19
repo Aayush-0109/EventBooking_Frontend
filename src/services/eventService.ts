@@ -44,7 +44,6 @@ class EventService {
             eventData.images.forEach((image) => {
                 formData.append("images", image)
             });
-            console.log(formData);
 
             const response = await post<Event>("/events", formData, {
                 headers: {
@@ -54,15 +53,26 @@ class EventService {
             return response.data;
         }
         else {
-            console.log("not in");
-
             const { images, ...formData } = eventData;
-            const response = await post<Event>("/events", formData);
+            const processedEventData = {
+                ...formData,
+                longitude: eventData.longitude.toString(),
+                latitude: eventData.latitude.toString()
+
+            }
+
+            const response = await post<Event>("/events", processedEventData);
             return response.data
         }
     }
     static async updateEvent(id: number, eventData: UpdateEventData): Promise<ApiResponse<Event>> {
-        const response = await put<Event>(`/events/${id}`, eventData);
+         const processedEventData = {
+            ...eventData,
+            ...(eventData.latitude && {latitude : eventData.latitude?.toString()}),
+            ...(eventData.longitude && {longitude : eventData.longitude?.toString()}),
+            ...(eventData.date && {date : new Date(eventData.date).toISOString})
+         }
+        const response = await put<Event>(`/events/${id}`, processedEventData);
         return response.data;
     }
     static async deleteEvent(id: number): Promise<ApiResponse<null>> {

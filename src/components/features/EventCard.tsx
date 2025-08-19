@@ -4,7 +4,7 @@ import { Calendar, MapPin, Users} from 'lucide-react';
 import { Event } from '../../services';
 import { formatDate } from '../../lib/utils';
 import Button from '../ui/Button';
-
+import { useLocation } from 'react-router-dom';
 interface EventCardProps {
     event: Event;
     onBook?: (eventId: number) => void;
@@ -16,6 +16,7 @@ const EventCard: React.FC<EventCardProps> = ({
     onBook,
     loading = false
 }) => {
+    const location = useLocation()
     return (
         <div className="bg-white rounded-xl shadow-soft overflow-hidden hover:shadow-medium transition-shadow">
             {/* Event Image */}
@@ -63,6 +64,7 @@ const EventCard: React.FC<EventCardProps> = ({
                     <Link
                         to={`/events/${event.id}`}
                         className="flex-1"
+                        state={{from : location.pathname }}
                     >
                         <Button variant="outline" className="w-full">
                             View Details

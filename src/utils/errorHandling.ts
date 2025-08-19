@@ -8,7 +8,8 @@ export enum errorType {
     RATE_LIMIT_ERROR = 'rate_limit_error',
     SERVER_ERROR = 'server_error',
     UNKNOWN_ERROR = 'unknown_error',
-    NOT_FOUND_ERROR = 'Not_FoundoError'
+    NOT_FOUND_ERROR = 'Not_FoundoError',
+    DUPLICATION_ERROR = 'duplicate_request'
 }
 
 
@@ -82,12 +83,20 @@ export const classifyError = (error: any): ClassifiedError => {
             case 404:
                 return {
                     type: errorType.NOT_FOUND_ERROR, // Add this to enum
-                    message: data.message || 'The requested resource was not found.',
+                    message: data.message.split(':')?.[1] || 'The requested resource was not found.',
                     technicalMessage: `Resource not found: ${JSON.stringify(data.message)}`,
                     retryable: false,
                     severity: 'low',
                     statusCode: 404
                 };
+                case 409: return {
+                    type: errorType.DUPLICATION_ERROR, // Add this to enum
+                    message: data.message.split(':')[1] || 'User has already created a request.',
+                    technicalMessage: `Duplicate request: ${JSON.stringify(data.message)}`,
+                    retryable: false,
+                    severity: 'low',
+                    statusCode: 409
+                }
             case 500:
             case 502:
             case 503:
@@ -129,7 +138,8 @@ export const getErrorMessage = (error: errorType, customMessage?: string): strin
         [errorType.SERVER_ERROR]: "Something went wrong on our end. Please try again in a few minutes.",
         [errorType.NETWORK_ERROR]: "Unable to connect to server. Please check your internet connection.",
         [errorType.UNKNOWN_ERROR]: "An unexpected error occurred. Please try again.",
-        [errorType.NOT_FOUND_ERROR] : "The requested resource was not found."
+        [errorType.NOT_FOUND_ERROR] : "The requested resource was not found.",
+        [errorType.DUPLICATION_ERROR] : "User has already created a request."
     };
     return (defaultMessages[error])
 }

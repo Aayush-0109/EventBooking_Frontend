@@ -12,43 +12,9 @@ import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Pagination from '../components/ui/Pagination';
 import Container from '../components/layout/Container';
-import { OrganizerRequest } from '../types';
+import { OrganizerRequest } from '../services';
 
-// Mock organizer requests for the current organizer
-const mockOrganizerRequests: OrganizerRequest[] = [
-    {
-        id: 1,
-        userId: 1,
-        overview: 'Experienced event organizer with 10+ years in corporate events and conferences. Specialized in tech industry events.',
-        resume: 'https://example.com/resume-1.pdf',
-        createdAt: '2024-01-15T10:00:00Z',
-        user: {
-            id: 1,
-            name: 'Current User',
-            email: 'organizer@example.com',
-            role: 'USER' as const,
-            profileImage: null,
-            createdAt: '2024-01-01T00:00:00Z',
-            updatedAt: '2024-01-01T00:00:00Z'
-        }
-    },
-    {
-        id: 2,
-        userId: 1,
-        overview: 'Follow-up application with additional certifications in event management and updated portfolio.',
-        resume: 'https://example.com/resume-2.pdf',
-        createdAt: '2024-01-20T14:30:00Z',
-        user: {
-            id: 1,
-            name: 'Current User',
-            email: 'organizer@example.com',
-            role: 'USER' as const,
-            profileImage: null,
-            createdAt: '2024-01-01T00:00:00Z',
-            updatedAt: '2024-01-01T00:00:00Z'
-        }
-    }
-];
+
 
 const OrganizerRequestsPage: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');

@@ -2,8 +2,9 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import { Calendar, MapPin, Users } from 'lucide-react';
-
+import { useAuthStore } from '../store/authStore';
 const HomePage: React.FC = () => {
+    const{isAuthenticated,user} = useAuthStore()
     const navigate = useNavigate();
 
     return (
@@ -25,14 +26,16 @@ const HomePage: React.FC = () => {
                     >
                         Browse Events
                     </Button>
-                    <Button
-                        variant="outline"
-                        size="lg"
-                        className="text-lg px-8"
-                        onClick={() => navigate('/create-event')}
-                    >
-                        Create Event
-                    </Button>
+                    {
+                        isAuthenticated && (user?.role==='ADMIN' || user?.role==='ORGANIZER') && (<Button
+                            variant="outline"
+                            size="lg"
+                            className="text-lg px-8"
+                            onClick={() => navigate('/create-event')}
+                        >
+                            Create Event
+                        </Button>)
+                    }
                 </div>
             </div>
 

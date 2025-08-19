@@ -32,7 +32,7 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 export const RegisterPage: React.FC = () => {
     const navigate = useNavigate()
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const { registerUser, error, clearError, isLoading, user, isAuthenticated } = useAuthStore()
+    const { registerUser, error, clearError, isMutating, user, isAuthenticated } = useAuthStore()
 
 
     const [showPassword, setShowPassword] = useState(false);
@@ -227,7 +227,7 @@ export const RegisterPage: React.FC = () => {
                                             size="sm"
                                             onClick={() => fileInputRef.current?.click()}
                                             className="w-full"
-                                            disabled={isLoading}
+                                            disabled={isMutating}
                                         >
                                             <Upload className="w-4 h-4 mr-2" />
                                             {selectedImage ? 'Change Image' : 'Upload Image'}
@@ -256,7 +256,7 @@ export const RegisterPage: React.FC = () => {
                                     leftIcon={User}
                                     placeholder="Enter your full name"
                                     required
-                                    disabled={isLoading}
+                                    disabled={isMutating}
                                 />
 
                                 <Input
@@ -267,7 +267,7 @@ export const RegisterPage: React.FC = () => {
                                     leftIcon={Mail}
                                     placeholder="Enter your email address"
                                     required
-                                    disabled={isLoading}
+                                    disabled={isMutating}
                                 />
                             </div>
 
@@ -282,7 +282,7 @@ export const RegisterPage: React.FC = () => {
                                         leftIcon={Lock}
                                         placeholder="Create a password"
                                         required
-                                        disabled={isLoading}
+                                        disabled={isMutating}
                                     />
                                     <button
                                         type="button"
@@ -304,7 +304,7 @@ export const RegisterPage: React.FC = () => {
                                         leftIcon={Lock}
                                         placeholder="Confirm your password"
                                         required
-                                        disabled={isLoading}
+                                        disabled={isMutating}
                                         className={`${confirmPasswordTouched && confirmPassword ?
                                             (passwordsMatch ? 'border-green-300 focus:border-green-500' : 'border-red-300 focus:border-red-500')
                                             : ''
@@ -367,7 +367,7 @@ export const RegisterPage: React.FC = () => {
                                     type="checkbox"
                                     {...register('termsAccepted')}
                                     className="mt-1 w-4 h-4 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
-                                    disabled={isLoading}
+                                    disabled={isMutating}
                                 />
                                 <div>
                                     <label className="text-sm text-neutral-600">
@@ -400,12 +400,12 @@ export const RegisterPage: React.FC = () => {
 
                             <Button
                                 type="submit"
-                                className={`w-full transition-all duration-200 ${!isFormValid && !isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                className={`w-full transition-all duration-200 ${!isFormValid && !isMutating ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 size="lg"
-                                loading={isLoading}
-                                disabled={isLoading || !isFormValid}
+                                loading={isMutating}
+                                disabled={isMutating || !isFormValid}
                             >
-                                {isLoading ? (
+                                {isMutating ? (
                                     <>
                                         <LoadingSpinner size="sm" />
                                         Creating Account...
@@ -416,7 +416,7 @@ export const RegisterPage: React.FC = () => {
                             </Button>
 
 
-                            {!isFormValid && !isLoading && (
+                            {!isFormValid && !isMutating && (
                                 <p className="text-sm text-neutral-500 text-center">
                                     Please ensure passwords match to continue
                                 </p>

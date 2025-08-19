@@ -7,46 +7,9 @@ import Pagination from '../components/ui/Pagination';
 import Container from '../components/layout/Container';
 import { Event } from '../types';
 
-// Mock nearby events data - matches backend schema exactly
-const generateMockNearbyEvents = (): Event[] => {
-    const events: Event[] = [];
-    const titles = ['Local Food Festival', 'Community Art Fair', 'Neighborhood Music Night', 'Local Tech Meetup', 'Park Cleanup Event'];
 
-    for (let i = 1; i <= 23; i++) {
-        const randomTitle = titles[i % titles.length];
 
-        events.push({
-            id: i,
-            title: `${randomTitle} ${i}`,
-            description: `Join us for a wonderful ${randomTitle.toLowerCase()} in your neighborhood. This local event brings together community members for a great time with activities, networking, and entertainment.`,
-            date: new Date(2024, Math.floor(Math.random() * 6) + 1, Math.floor(Math.random() * 28) + 1).toISOString(),
-            images: [`https://images.unsplash.com/photo-${1540575467063 + (i * 1000)}?w=500`],
-            registrations: [],
-            user: {
-                id: Math.floor(i / 5) + 1,
-                name: `Local Organizer ${Math.floor(i / 5) + 1}`,
-                email: `localorg${Math.floor(i / 5) + 1}@example.com`,
-                role: 'ORGANIZER' as const,
-                profileImage: null,
-                createdAt: '2024-01-01T00:00:00Z',
-                updatedAt: '2024-01-01T00:00:00Z'
-            },
-            longitude: -74.0060 + (Math.random() * 0.2 - 0.1), // Close to current location
-            latitude: 40.7128 + (Math.random() * 0.2 - 0.1),
-            address: `${100 + i} Local Street`,
-            city: 'New York',
-            state: 'NY',
-            country: 'USA',
-            postalCode: `${10000 + i}`,
-            createdBy: Math.floor(i / 5) + 1,
-            createdAt: new Date(2024, 0, Math.floor(Math.random() * 30) + 1).toISOString(),
-            updatedAt: new Date(2024, 0, Math.floor(Math.random() * 30) + 1).toISOString()
-        });
-    }
-    return events;
-};
 
-const mockNearbyEvents = generateMockNearbyEvents();
 
 const NearbyEventsPage: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');

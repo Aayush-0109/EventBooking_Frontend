@@ -15,7 +15,9 @@ class OrganizerRequestService {
         formData.append("overview", requestData.overview);
         formData.append("resume", requestData.resume);
 
-        const response = await post<OrganizerRequest>("/organizer-request/create", formData);
+        const response = await post<OrganizerRequest>("/organizer-request/create", formData,{headers:{
+            "Content-Type" : "multipart/form-data"
+        }});
         return response.data;
     }
     static async getRequests(query?: OrganizerRequestQuery): Promise<ApiResponse<OrganizerRequestsResponse>> {

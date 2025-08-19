@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Calendar,
     Users,
@@ -8,104 +8,22 @@ import {
     Trash2,
     Eye,
     BarChart3,
-    Settings,
-    Filter,
-    Search
+    // Settings,
+    // Filter,
+    // Search,
+    ChevronRight,
+    ChevronLeft
 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Container from '../components/layout/Container';
-import EventCard from '../components/features/EventCard';
-import { Event } from '../types';
+import useEventStore from '../store/eventStore';
+// import { useAuthStore } from '../store/authStore';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { message } from 'antd';
 
-// Mock data for demonstration - matches backend schema exactly
-const mockEvents = [
-    {
-        id: 1,
-        title: 'Tech Conference 2024',
-        description: 'Annual technology conference featuring industry leaders and cutting-edge technology discussions',
-        date: '2024-02-15T09:00:00Z',
-        images: ['https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=500'],
-        registrations: [
-            {
-                id: 1,
-                userId: 101,
-                eventId: 1,
-                registeredAt: '2024-01-15T10:00:00Z',
-                user: {
-                    id: 101,
-                    name: 'John Doe',
-                    email: 'john@example.com',
-                    role: 'USER' as const,
-                    profileImage: null,
-                    createdAt: '2024-01-01T00:00:00Z',
-                    updatedAt: '2024-01-01T00:00:00Z'
-                }
-            },
-            {
-                id: 2,
-                userId: 102,
-                eventId: 1,
-                registeredAt: '2024-01-16T14:30:00Z',
-                user: {
-                    id: 102,
-                    name: 'Jane Smith',
-                    email: 'jane@example.com',
-                    role: 'USER' as const,
-                    profileImage: null,
-                    createdAt: '2024-01-02T00:00:00Z',
-                    updatedAt: '2024-01-02T00:00:00Z'
-                }
-            }
-        ],
-        user: {
-            id: 1,
-            name: 'Tech Events Inc',
-            email: 'contact@techevents.com',
-            role: 'ORGANIZER' as const,
-            profileImage: null,
-            createdAt: '2024-01-01T00:00:00Z',
-            updatedAt: '2024-01-01T00:00:00Z'
-        },
-        longitude: -74.0060,
-        latitude: 40.7128,
-        address: '123 Convention Center Blvd',
-        city: 'New York',
-        state: 'NY',
-        country: 'USA',
-        postalCode: '10001',
-        createdBy: 1,
-        createdAt: '2024-01-01T00:00:00Z',
-        updatedAt: '2024-01-01T00:00:00Z'
-    },
-    {
-        id: 2,
-        title: 'Music Festival',
-        description: 'Three-day music festival with top artists from around the world',
-        date: '2024-03-20T18:00:00Z',
-        images: ['https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=500'],
-        registrations: [],
-        user: {
-            id: 1,
-            name: 'Tech Events Inc',
-            email: 'contact@techevents.com',
-            role: 'ORGANIZER' as const,
-            profileImage: null,
-            createdAt: '2024-01-01T00:00:00Z',
-            updatedAt: '2024-01-01T00:00:00Z'
-        },
-        longitude: -73.9665,
-        latitude: 40.7812,
-        address: '1 Central Park West',
-        city: 'New York',
-        state: 'NY',
-        country: 'USA',
-        postalCode: '10023',
-        createdBy: 1,
-        createdAt: '2024-01-02T00:00:00Z',
-        updatedAt: '2024-01-02T00:00:00Z'
-    }
-] as Event[];
+
 
 const mockStats = {
     totalEvents: 12,
@@ -115,21 +33,62 @@ const mockStats = {
 };
 
 export const OrganizerDashboard: React.FC = () => {
+    const location = useLocation()
+    const navigate = useNavigate()
+    // const { user } = useAuthStore()
     const [activeTab, setActiveTab] = useState<'overview' | 'events' | 'analytics' | 'settings'>('overview');
-    const [searchTerm, setSearchTerm] = useState('');
-    const filteredEvents = mockEvents.filter(event => {
-        const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            event.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            event.address.toLowerCase().includes(searchTerm.toLowerCase());
-        return matchesSearch;
-    });
+    const { clearError, error, fetchMyEvents, myEvents, isLoading, deleteEvent, isMutating, pagination } = useEventStore()
+    useEffect(() => {
+        clearError()
+    }, [clearError])
+
+    useEffect(() => {
+        (() => {
+            fetchMyEvents({})
+        })()
+    }, [fetchMyEvents])
+
+    const deleteHandler = (id: number) => async () => {
+        console.log("inside");
+
+        try {
+            await deleteEvent(id);
+            message.info("Event deleted successfully!")
+        } catch (error) {
+
+        }
+    }
+    const { currentPage, totalPages, totalItems } = pagination.myEvents
+    const handlePageChange = (newPage: number) => {
+        if (newPage >= 1 && newPage <= totalPages) {
+            fetchMyEvents({ page: newPage });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }
+
+    const getPageNumbers = () => {
+        const pages = [];
+        const maxVisible = 5;
+        let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+        let end = Math.min(totalPages, start + maxVisible - 1);
+
+        if (end - start + 1 < maxVisible) {
+            start = Math.max(1, end - maxVisible + 1);
+        }
+
+        for (let i = start; i <= end; i++) {
+            pages.push(i);
+        }
+        return pages;
+    };
+
 
     return (
         <Container>
             <div className="py-8">
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-neutral-900 mb-2">Organizer Dashboard</h1>
+                    <h1 className="text-3xl font-bold text-neutral-900 mb-2">Events Dashboard</h1>
                     <p className="text-neutral-600">Manage your events and track performance</p>
                 </div>
 
@@ -139,8 +98,8 @@ export const OrganizerDashboard: React.FC = () => {
                         {[
                             { id: 'overview', label: 'Overview', icon: BarChart3 },
                             { id: 'events', label: 'My Events', icon: Calendar },
-                            { id: 'analytics', label: 'Analytics', icon: TrendingUp },
-                            { id: 'settings', label: 'Settings', icon: Settings }
+                            // { id: 'analytics', label: 'Analytics', icon: TrendingUp },
+                            // { id: 'settings', label: 'Settings', icon: Settings }
                         ].map((tab) => (
                             <button
                                 key={tab.id}
@@ -217,22 +176,22 @@ export const OrganizerDashboard: React.FC = () => {
                             <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
                                 <div className="flex justify-between items-center mb-6">
                                     <h2 className="text-xl font-semibold text-neutral-900">Recent Events</h2>
-                                    <Button variant="outline" size="sm">
+                                    <Button variant="outline" size="sm" onClick={() => { setActiveTab("events") }}>
                                         View All
                                     </Button>
                                 </div>
 
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    {mockEvents.slice(0, 4).map((event) => (
+                                    {myEvents.slice(0, 4).map((event) => (
                                         <div
                                             key={event.id}
                                             className="border border-neutral-200 rounded-lg p-4 hover:shadow-md transition-shadow"
                                         >
                                             <div className="flex items-start justify-between mb-3">
                                                 <h3 className="font-semibold text-neutral-900">{event.title}</h3>
-                                                <span className="px-2 py-1 rounded-full text-xs font-medium bg-success-100 text-success-700">
+                                                {/* <span className="px-2 py-1 rounded-full text-xs font-medium bg-success-100 text-success-700">
                                                     Active
-                                                </span>
+                                                </span> */}
                                             </div>
 
                                             <div className="space-y-2 text-sm text-neutral-600 mb-3">
@@ -248,7 +207,7 @@ export const OrganizerDashboard: React.FC = () => {
                                                 </div>
                                                 <div className="flex items-center space-x-2">
                                                     <Users className="w-4 h-4" />
-                                                    <span>{event.registrations?.length || 0} registrations</span>
+                                                    <span>{event.registrations || 0} registrations</span>
                                                 </div>
                                             </div>
 
@@ -257,7 +216,13 @@ export const OrganizerDashboard: React.FC = () => {
                                                     <Eye className="w-4 h-4 mr-1" />
                                                     View
                                                 </Button>
-                                                <Button variant="outline" size="sm">
+                                                <Button variant="outline" size="sm" onClick={() => {
+                                                    navigate(`/update-event/${event.id}`, {
+                                                        state: {
+                                                            from: location.pathname
+                                                        }
+                                                    });
+                                                }}>
                                                     <Edit className="w-4 h-4 mr-1" />
                                                     Edit
                                                 </Button>
@@ -278,105 +243,175 @@ export const OrganizerDashboard: React.FC = () => {
                                     <h2 className="text-xl font-semibold text-neutral-900">My Events</h2>
                                     <p className="text-neutral-600">Manage and track your events</p>
                                 </div>
-                                <Button size="lg">
+                                <Button size="lg" onClick={() => { navigate("/create-event", { state: { from: location.pathname } }) }}>
                                     <Plus className="w-4 h-4 mr-2" />
                                     Create New Event
                                 </Button>
                             </div>
 
-                            {/* Search */}
-                            <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-4">
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-neutral-400" />
-                                    <Input
-                                        placeholder="Search events by title, city, or address..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="pl-10"
-                                    />
-                                </div>
-                            </div>
 
-                            {/* Events Grid */}
-                            {filteredEvents.length === 0 ? (
-                                <div className="text-center py-12">
-                                    <Calendar className="w-12 h-12 text-neutral-400 mx-auto mb-4" />
-                                    <h3 className="text-lg font-medium text-neutral-900 mb-2">No events found</h3>
-                                    <p className="text-neutral-600 mb-4">
-                                        {searchTerm
-                                            ? 'Try adjusting your search'
-                                            : 'Create your first event to get started!'
-                                        }
-                                    </p>
-                                    <Button>
-                                        <Plus className="w-4 h-4 mr-2" />
-                                        Create Event
-                                    </Button>
+
+                            {isLoading ? (<>
+                                <div className="flex items-center justify-center py-12">
+                                    <div className="text-center">
+                                        <LoadingSpinner size="lg" />
+                                        <p className="mt-4 text-neutral-600">Loading events...</p>
+                                    </div>
                                 </div>
-                            ) : (
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    {filteredEvents.map((event) => (
-                                        <div
-                                            key={event.id}
-                                            className="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden"
-                                        >
-                                            <div className="relative h-48">
-                                                <img
-                                                    src={event.images?.[0] || '/placeholder-event.jpg'}
-                                                    alt={event.title}
-                                                    className="w-full h-full object-cover"
-                                                />
-                                                <div className="absolute top-4 right-4">
-                                                    <span className="px-3 py-1 rounded-full text-sm font-medium bg-success-100 text-success-700">
-                                                        Active
-                                                    </span>
+                            </>) : (<>
+                                {myEvents.length === 0 ? (
+                                    <div className="text-center py-12">
+                                        <Calendar className="w-12 h-12 text-neutral-400 mx-auto mb-4" />
+                                        <h3 className="text-lg font-medium text-neutral-900 mb-2">No events found</h3>
+                                        <p className="text-neutral-600 mb-4">
+
+                                            Create your first event to get started!
+
+                                        </p>
+
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                        {myEvents.map((event) => (
+                                            <div
+                                                key={event.id}
+                                                className="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden"
+                                            >
+                                                <div className="relative h-48">
+                                                    <div className="h-48 bg-gradient-to-br from-primary-200 to-primary-300 flex items-center justify-center">
+                                                        {event.images && !Array.isArray(event.images) ? (
+                                                            <img
+                                                                src={event.images}
+                                                                alt={event.title}
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                        ) : (
+                                                            <Calendar className="w-12 h-12 text-primary-600" />
+                                                        )}
+                                                    </div>
+
+                                                </div>
+
+                                                <div className="p-6">
+                                                    <h3 className="text-lg font-semibold text-neutral-900 mb-2">
+                                                        {event.title}
+                                                    </h3>
+
+                                                    <p className="text-neutral-600 text-sm mb-4 line-clamp-2">
+                                                        {event.description}
+                                                    </p>
+
+                                                    <div className="space-y-2 mb-4">
+                                                        <div className="flex items-center space-x-2 text-sm text-neutral-600">
+                                                            <Calendar className="w-4 h-4" />
+                                                            <span>
+                                                                {new Date(event.date).toLocaleDateString('en-US', {
+                                                                    weekday: 'short',
+                                                                    year: 'numeric',
+                                                                    month: 'short',
+                                                                    day: 'numeric'
+                                                                })}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex items-center space-x-2 text-sm text-neutral-600">
+                                                            <Users className="w-4 h-4" />
+                                                            <span>{event.registrations || 0} registrations</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex space-x-2">
+                                                        <Button variant="outline" size="sm" className="flex-1" onClick={() => {
+                                                            navigate(`/events/${event.id}`, {
+                                                                state: {
+                                                                    from: location.pathname
+                                                                }
+                                                            })
+                                                        }}>
+                                                            <Eye className="w-4 h-4 mr-1" />
+                                                            View Details
+                                                        </Button>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => {
+                                                                navigate(`/update-event/${event.id}`, {
+                                                                    state: {
+                                                                        from: location.pathname
+                                                                    }
+                                                                })
+                                                            }}
+                                                        >
+                                                            <Edit className="w-4 h-4" />
+                                                        </Button>
+                                                        <Button variant="outline" size="sm"
+                                                            onClick={() => { deleteHandler(event.id)() }}
+                                                            disabled={isMutating}
+                                                            loading={isMutating}
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </Button>
+                                                    </div>
                                                 </div>
                                             </div>
-
-                                            <div className="p-6">
-                                                <h3 className="text-lg font-semibold text-neutral-900 mb-2">
-                                                    {event.title}
-                                                </h3>
-
-                                                <p className="text-neutral-600 text-sm mb-4 line-clamp-2">
-                                                    {event.description}
-                                                </p>
-
-                                                <div className="space-y-2 mb-4">
-                                                    <div className="flex items-center space-x-2 text-sm text-neutral-600">
-                                                        <Calendar className="w-4 h-4" />
-                                                        <span>
-                                                            {new Date(event.date).toLocaleDateString('en-US', {
-                                                                weekday: 'short',
-                                                                year: 'numeric',
-                                                                month: 'short',
-                                                                day: 'numeric'
-                                                            })}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex items-center space-x-2 text-sm text-neutral-600">
-                                                        <Users className="w-4 h-4" />
-                                                        <span>{event.registrations?.length || 0} registrations</span>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex space-x-2">
-                                                    <Button variant="outline" size="sm" className="flex-1">
-                                                        <Eye className="w-4 h-4 mr-1" />
-                                                        View Details
-                                                    </Button>
-                                                    <Button variant="outline" size="sm">
-                                                        <Edit className="w-4 h-4" />
-                                                    </Button>
-                                                    <Button variant="outline" size="sm">
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </Button>
-                                                </div>
-                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                {totalPages > 1 && (
+                                    <div className="flex items-center justify-between border-t border-neutral-200 pt-6 mt-6">
+                                        {/* Info */}
+                                        <div className="text-sm text-neutral-700">
+                                            Page {currentPage} of {totalPages} • {totalItems} total bookings
                                         </div>
-                                    ))}
-                                </div>
-                            )}
+
+                                        {/* Buttons */}
+                                        <div className="flex items-center space-x-2">
+                                            {/* Prev */}
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => handlePageChange(currentPage - 1)}
+                                                disabled={currentPage === 1 || isLoading}
+                                            >
+                                                <ChevronLeft className="w-4 h-4 mr-1" />
+                                                Previous
+                                            </Button>
+
+                                            {/* Page Numbers */}
+                                            <div className="hidden sm:flex space-x-1">
+                                                {getPageNumbers().map((pageNum) => (
+                                                    <Button
+                                                        key={pageNum}
+                                                        variant={pageNum === currentPage ? "primary" : "ghost"}
+                                                        size="sm"
+                                                        onClick={() => handlePageChange(pageNum)}
+                                                        disabled={isLoading}
+                                                        className="min-w-10"
+                                                    >
+                                                        {pageNum}
+                                                    </Button>
+                                                ))}
+                                            </div>
+
+                                            {/* Mobile Info */}
+                                            <div className="sm:hidden text-sm text-neutral-600">
+                                                {currentPage} / {totalPages}
+                                            </div>
+
+                                            {/* Next */}
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => handlePageChange(currentPage + 1)}
+                                                disabled={currentPage === totalPages || isLoading}
+                                            >
+                                                Next
+                                                <ChevronRight className="w-4 h-4 ml-1" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
+                            </>)}
+
                         </div>
                     )}
 

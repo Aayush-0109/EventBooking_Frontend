@@ -9,6 +9,7 @@ import { RegisterPage } from './pages/RegisterPage';
 import { UserDashboard } from './pages/UserDashboard';
 import { OrganizerDashboard } from './pages/OrganizerDashboard';
 import { CreateEventPage } from './pages/CreateEventPage';
+import { UpdateEventPage } from './pages/UpdateEventPage';
 import { OrganizerRequestPage } from './pages/OrganizerRequestPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import AdminUsersPage from './pages/AdminUsersPage';
@@ -30,7 +31,7 @@ function App() {
           <Header />
           <Container className="flex-1 py-8">
             <Routes>
-              
+
 
               <Route path="/" element={<HomePage />} />
               <Route path="/events" element={<EventsPage />} />
@@ -39,7 +40,7 @@ function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
 
-         
+
               <Route path="/dashboard" element={
                 <ProtectedRoute >
                   <UserDashboard />
@@ -72,6 +73,12 @@ function App() {
               <Route path="/create-event" element={
                 <ProtectedRoute requiredRole={["ORGANIZER", "ADMIN"]}>
                   <CreateEventPage />
+                </ProtectedRoute>
+              } />
+
+              <Route path="/update-event/:id" element={
+                <ProtectedRoute requiredRole={["ORGANIZER", "ADMIN"]}>
+                  <UpdateEventPage />
                 </ProtectedRoute>
               } />
 

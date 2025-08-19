@@ -29,7 +29,7 @@ export const ProtectedRoute = ({ children, requiredRole, requiredAuth = true }: 
     }
 
     if (requiredAuth && !isAuthenticated) {
-        return <Navigate to='/login' state={{ from: location }} replace />
+        return <Navigate to='/login' state={{ from: location.pathname }} replace />
     }
 
     if (requiredRole && user) {

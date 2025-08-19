@@ -15,14 +15,15 @@ interface AuthStore {
     isAuthenticated: boolean;
     isLoading: boolean;
     error: string | null;
-    isAuthChecking : boolean
+    isAuthChecking: boolean;
+    isMutating: boolean;
 
     login: (credentials: LoginCredentials) => Promise<void>;
     registerUser: (userData: RegisterData) => Promise<void>;
     logout: () => Promise<void>;
     checkAuth: () => Promise<void>;
     refreshToken: () => Promise<boolean>;
-    updateprofile: (userData: UpdateUserData) => Promise<void>;
+    updateProfile: (userData: UpdateUserData) => Promise<void>;
     setLoading: (Loading: boolean) => void;
     clearError: () => void;
     clearAuth: () => void;
@@ -37,7 +38,8 @@ export const useAuthStore = create<AuthStore>()(
                 isAuthenticated: false,
                 error: null,
                 isLoading: false,
-                isAuthChecking : false,
+                isAuthChecking: false,
+                isMutating: false,
                 // login 
 
                 login: async (credentials) => {
@@ -46,8 +48,8 @@ export const useAuthStore = create<AuthStore>()(
                         error: null
                     })
                     try {
-                        
-                         
+
+
                         const response = await AuthService.login(credentials);
                         if (response.success && response.data) {
                             set(
@@ -80,7 +82,7 @@ export const useAuthStore = create<AuthStore>()(
                 },
                 registerUser: async (userData) => {
                     set({
-                        isLoading: true,
+                        isMutating: true,
                         error: null
                     });
                     try {
@@ -90,7 +92,7 @@ export const useAuthStore = create<AuthStore>()(
                         if (response.success) {
                             set(
                                 {
-                                    isLoading: false,
+                                    isMutating: false,
                                     error: null
                                 }
                             );
@@ -102,12 +104,13 @@ export const useAuthStore = create<AuthStore>()(
                         console.log("Registration failed : ", error);
                         const classifiedError = classifyError(error);
                         set({
-                            isLoading: false,
+                            isMutating: false,
                             error: classifiedError.message
                         })
 
 
 
+                        throw error
                     }
                 },
                 logout: async () => {
@@ -167,6 +170,7 @@ export const useAuthStore = create<AuthStore>()(
                             });
 
                         }
+                        throw error;
                     }
                 },
                 checkAuth: async () => {
@@ -194,7 +198,7 @@ export const useAuthStore = create<AuthStore>()(
                             isAuthChecking: false,
                             error: null,
                         });
-                      throw error
+                        throw error
                     }
                 },
                 refreshToken: async () => {
@@ -224,9 +228,9 @@ export const useAuthStore = create<AuthStore>()(
                         return false
                     }
                 },
-                updateprofile: async (userData) => {
+                updateProfile: async (userData) => {
                     set({
-                        isLoading: true, error: null
+                        isMutating: true, error: null
                     })
                     try {
                         const response = await AuthService.updateProfile(userData);
@@ -234,7 +238,7 @@ export const useAuthStore = create<AuthStore>()(
                             set({
                                 user: response.data,
                                 isAuthenticated: true,
-                                isLoading: false,
+                                isMutating: false,
                                 error: null
                             })
                             console.log("Profile Update Successful");
@@ -247,7 +251,7 @@ export const useAuthStore = create<AuthStore>()(
                         const classifiedError = classifyError(error);
                         set({
 
-                            isLoading: false,
+                            isMutating: false,
                             error: classifiedError.message
                         })
 

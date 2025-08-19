@@ -1,22 +1,30 @@
 import React from 'react';
 import Container from '../components/layout/Container';
 import { OrganizerRequestForm } from '../components/features/OrganizerRequestForm';
-
+import { message } from 'antd';
+import useOrganizerRequestStore from '../store/organizerRequestStore';
+import { CreateOrganizerRequestData } from '../services';
+import { useNavigate } from 'react-router-dom';
 export const OrganizerRequestPage: React.FC = () => {
-    const handleSubmit = async (data: { overview: string; resume: File | null }) => {
-        // Mock API call
+    const{createRequest} =useOrganizerRequestStore();
+    const navigate = useNavigate()
+    const handleSubmit = async (data: CreateOrganizerRequestData) => {
+        
         console.log('Organizer request data:', data);
 
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        // Mock success response
-        alert('Organizer request submitted successfully! We will review your application and get back to you within 3-5 business days.');
+        try {
+            await createRequest(data)
+            message.success("Organizer Request Submitted Successfully")
+        } catch (error) {
+            
+        }
+     
+        
+        
     };
 
     const handleCancel = () => {
-        // Mock navigation back
-        alert('Application cancelled');
+        navigate('/')
     };
 
     return (

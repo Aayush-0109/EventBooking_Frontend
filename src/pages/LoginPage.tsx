@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, {  useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -11,7 +11,8 @@ import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { message } from 'antd'
 import { useAuthStore } from '../store/authStore';
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate ,useLocation} from 'react-router-dom';
+
 // Login form validation schema matching backend exactly
 const loginSchema = z.object({
     email: z
@@ -27,9 +28,9 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export const LoginPage: React.FC = () => {
+    const location = useLocation()
     const navigate = useNavigate()
     const [showPassword, setShowPassword] = useState(false);
-    const hasNavigated = useRef(false);
     const { login, isLoading, error, clearError, isAuthenticated, user } = useAuthStore();
     const {
         register,
@@ -47,10 +48,10 @@ export const LoginPage: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        if (isAuthenticated && user && !hasNavigated.current) {
-            hasNavigated.current = true;
+        if (isAuthenticated && user ) {
+            
             message.success(`Welcome back, ${user.name}!`);
-            navigate('/');
+            navigate(location.state?.from ||'/');
         }
     }, [isAuthenticated, user, navigate]);
 
@@ -113,7 +114,7 @@ export const LoginPage: React.FC = () => {
                             </div>
 
                             <div className="flex items-center justify-between">
-                                <label className="flex items-center">
+                                {/* <label className="flex items-center">
                                     <input
                                         type="checkbox"
                                         className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
@@ -121,7 +122,7 @@ export const LoginPage: React.FC = () => {
                                     <span className="ml-2 text-sm text-neutral-600">
                                         Remember me
                                     </span>
-                                </label>
+                                </label> */}
                                 <Link
                                     to="/forgot-password"
                                     className="text-sm text-primary-600 hover:text-primary-700 font-medium"

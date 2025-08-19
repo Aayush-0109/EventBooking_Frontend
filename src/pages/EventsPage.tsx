@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Search, Filter, MapPin, Calendar, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { message } from 'antd';
 
@@ -13,7 +13,7 @@ import { useAuthStore } from '../store/authStore';
 import { EventQuery } from '../services';
 
 const EventsPage: React.FC = () => {
-
+    const location = useLocation()
     const { user, isAuthenticated } = useAuthStore()
     const { allEvents, pagination, isLoading, isMutating, error, fetchEvents, bookEvent, clearError, selectedFilters } = useEventStore()
 
@@ -136,7 +136,7 @@ const EventsPage: React.FC = () => {
                     {canCreateEvent && (
                         <Button
                             variant="primary"
-                            onClick={() => navigate('/create-event')}
+                            onClick={() => navigate('/create-event', { state: { from: location.pathname } })}
                         >
                             Create Event
                         </Button>
@@ -254,7 +254,7 @@ const EventsPage: React.FC = () => {
                             {canCreateEvent && (
                                 <Button
                                     variant="primary"
-                                    onClick={() => navigate('/create-event')}
+                                    onClick={() => navigate('/create-event', { state: { from: location.pathname } })}
                                 >
                                     Create First Event
                                 </Button>
@@ -263,7 +263,7 @@ const EventsPage: React.FC = () => {
                     ) : (
                         <>
                             {/* Events Grid */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                 {allEvents.map((event) => (
                                     <EventCard
                                         key={event.id}

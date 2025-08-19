@@ -25,7 +25,7 @@ interface OrganizerRequestStore {
     clearRequests: () => void;
 }
 
-const useOrganizerRequestStore = create<OrganizerRequestStore>()(devtools((set) => ({
+const useOrganizerRequestStore = create<OrganizerRequestStore>()(devtools((set,get) => ({
     allRequests: [],
     currentRequest: null,
     pagination: createInitialPaginationState(),
@@ -147,6 +147,8 @@ const useOrganizerRequestStore = create<OrganizerRequestStore>()(devtools((set) 
                 isMutating: false,
                 error: classifiedError.message
             })
+            
+            throw error
         }
     },
     clearError: () => {

@@ -61,6 +61,7 @@ const useBookingStore = create<bookingStore>()(devtools((set) => ({
                 error: classifiedError.message,
                 userBookings: []
             })
+            throw error
         }
     },
     fetchEventBookings: async (eventId, query) => {
@@ -94,6 +95,7 @@ const useBookingStore = create<bookingStore>()(devtools((set) => ({
                     currentEventBookings: createInitialPaginationState()
                 }
             }))
+            throw error
         }
     },
     fetchBookingById: async (id) => {
@@ -120,6 +122,7 @@ const useBookingStore = create<bookingStore>()(devtools((set) => ({
                 error: classifiedError.message,
                 currentBooking: null
             }))
+            throw error
         }
 
     },
@@ -148,6 +151,7 @@ const useBookingStore = create<bookingStore>()(devtools((set) => ({
                 isMutating: false,
                 error: classifiedError.message,
             }))
+            throw error
         }
     },
     clearBookings: () => {

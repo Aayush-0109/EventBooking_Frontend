@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { cn } from '../../lib/utils';
 import Button from '../ui/Button';
 import {
     User,
     LogOut,
-    Settings,
     Calendar,
-    Shield,
     ChevronDown,
     Menu,
     X
@@ -16,6 +14,7 @@ import {
 import { message } from 'antd';
 
 const Header: React.FC = () => {
+    const location = useLocation()
     const navigate = useNavigate();
     const { user, isAuthenticated, logout } = useAuthStore();
     const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -26,7 +25,7 @@ const Header: React.FC = () => {
         try {
             await logout();
             message.success('Logged out successfully');
-            navigate('/');
+            navigate('/', { replace: true });
             setIsProfileOpen(false);
         } catch (error) {
             message.error('Logout failed. Please try again.');
@@ -52,9 +51,9 @@ const Header: React.FC = () => {
         ];
 
         // Add role-specific items
-        if (user?.role === 'ORGANIZER' || user?.role === 'ADMIN') {
-            authenticatedItems.push({ label: 'Create Event', href: '/create-event' });
-        }
+        // if (user?.role === 'ORGANIZER' || user?.role === 'ADMIN') {
+        //     authenticatedItems.push({ label: 'Create Event', href: '/create-event' });
+        // }
 
         if (user?.role === 'ADMIN') {
             authenticatedItems.push({ label: 'Admin Panel', href: '/admin' });
@@ -67,25 +66,25 @@ const Header: React.FC = () => {
 
     // Profile dropdown items
     const profileItems = [
-        {
-            label: 'Profile Settings',
-            href: '/profile',
-            icon: Settings
-        },
+        // {
+        //     label: 'Profile Settings',
+        //     href: '/dashboard',
+        //     icon: Settings
+        // },
         ...(user?.role === 'USER' ? [{
             label: 'Become Organizer',
             href: '/organizer-request',
             icon: Calendar
         }] : []),
         ...(user?.role === 'ORGANIZER' ? [{
-            label: 'Organizer Dashboard',
+            label: 'Events Dashboard',
             href: '/organizer/dashboard',
             icon: Calendar
         }] : []),
         ...(user?.role === 'ADMIN' ? [{
-            label: 'Admin Dashboard',
-            href: '/admin',
-            icon: Shield
+            label: 'Events Dashboard',
+            href: '/organizer/dashboard',
+            icon: Calendar
         }] : []),
     ];
 
@@ -179,7 +178,7 @@ const Header: React.FC = () => {
                         ) : (
                             <div className="flex items-center space-x-3">
                                 <Button
-                                    onClick={() => navigate('/login')}
+                                    onClick={() => navigate('/login', { state: { from: location.pathname } })}
                                     variant="ghost"
                                     size="sm"
                                 >

@@ -16,6 +16,8 @@ export interface User {
     email: string;
     role: 'USER' | 'ORGANIZER' | 'ADMIN';
     profileImage: string | null;
+    createdAt? : string;
+    updatedAt ? :string;
 }
 export interface LoginCredentials {
     email: string;
