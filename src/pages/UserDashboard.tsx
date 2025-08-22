@@ -65,7 +65,7 @@ const profileSchema = z
 type ProfileFormData = z.infer<typeof profileSchema>;
 
 export const UserDashboard: React.FC = () => {
-  const { user, updateProfile, isMutating, error, clearError} = useAuthStore()
+  const { user, updateProfile, isMutating, error, clearError } = useAuthStore()
   const { fetchUserBookings, userBookings, pagination, isLoading } = useBookingStore()
   const [activeTab, setActiveTab] = useState<'profile' | 'bookings' | 'settings'>('profile');
   const [isEditing, setIsEditing] = useState(false);

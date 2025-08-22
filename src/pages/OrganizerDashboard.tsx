@@ -240,7 +240,14 @@ export const OrganizerDashboard: React.FC = () => {
                                             </div>
 
                                             <div className="flex space-x-2">
-                                                <Button variant="outline" size="sm">
+                                                <Button variant="outline" size="sm" onClick={() => {
+                                                    navigate(`/events/${event.id}`, {
+                                                        state: {
+                                                            from: location.pathname
+                                                        }
+                                                    })
+                                                }}
+                                                >
                                                     <Eye className="w-4 h-4 mr-1" />
                                                     View
                                                 </Button>

@@ -204,6 +204,48 @@ const EventsPage: React.FC = () => {
                             />
                         </div>
 
+                        {/* Sorting Options */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Sort By */}
+                            <div>
+                                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                                    Sort By
+                                </label>
+                                <select
+                                    value={`${tempFilters.sortBy || 'date'}-${tempFilters.sortOrder || 'asc'}`}
+                                    onChange={(e) => {
+                                        const [field, order] = e.target.value.split('-');
+                                        updateTempFilter('sortBy', field as 'date' | 'title' | 'createdAt');
+                                        updateTempFilter('sortOrder', order as 'asc' | 'desc');
+                                    }}
+                                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                >
+                                    <option value="date-asc">Date (Earliest First)</option>
+                                    <option value="date-desc">Date (Latest First)</option>
+                                    <option value="title-asc">Title A-Z</option>
+                                    <option value="title-desc">Title Z-A</option>
+                                    <option value="createdAt-desc">Newest Created</option>
+                                    <option value="createdAt-asc">Oldest Created</option>
+                                </select>
+                            </div>
+
+                            {/* Results Per Page */}
+                            <div>
+                                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                                    Results Per Page
+                                </label>
+                                <select
+                                    value={tempFilters.limit || 10}
+                                    onChange={(e) => updateTempFilter('limit', e.target.value)}
+                                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                >
+                                    <option value={10}>10 per page</option>
+                                    <option value={20}>20 per page</option>
+                                    <option value={50}>50 per page</option>
+                                </select>
+                            </div>
+                        </div>
+
                         {/* Filter Actions */}
                         <div className="flex justify-end gap-3">
                             <Button variant="ghost" onClick={handleClearFilters}>

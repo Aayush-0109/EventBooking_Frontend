@@ -1,335 +1,357 @@
-import React, { useState } from 'react';
+// frontend/src/pages/AdminReviewRequestsPage.tsx
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
-    Search,
-    Filter,
-    Eye,
-    Check,
-    X,
-    Calendar,
     FileText,
-    Download,
-    Clock,
     CheckCircle,
-    XCircle
+    XCircle,
+    Clock,
+    Eye,
+    User,
+    Calendar,
+    ChevronLeft,
+    ChevronRight,
+    ArrowLeft
 } from 'lucide-react';
 import Button from '../components/ui/Button';
-import Input from '../components/ui/Input';
-import Pagination from '../components/ui/Pagination';
 import Container from '../components/layout/Container';
-import { OrganizerRequest } from '../types';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
+import useOrganizerRequestStore from '../store/organizerRequestStore';
+import { message } from 'antd';
 
-// Mock organizer requests data with pagination - matches backend schema exactly
-const generateMockRequests = (): OrganizerRequest[] => {
-    const requests: OrganizerRequest[] = [];
-    const names = ['John Doe', 'Jane Smith', 'Bob Johnson', 'Alice Wilson', 'Charlie Brown', 'Diana Prince', 'Edward Norton', 'Fiona Green'];
-    const overviews = [
-        'Experienced event organizer with 5+ years in corporate events',
-        'Specialized in music festivals and entertainment events',
-        'Tech conference organizer with startup background',
-        'Non-profit event coordinator with community focus',
-        'Wedding and social event planning expert',
-        'Sports tournament and competition organizer',
-        'Art gallery and cultural event specialist',
-        'Food festival and culinary event organizer'
-    ];
+type StatusFilter = 'ALL' | 'PENDING' | 'ACCEPTED' | 'REJECTED';
 
-    for (let i = 1; i <= 43; i++) {
-        requests.push({
-            id: i,
-            userId: i + 100,
-            overview: overviews[i % overviews.length],
-            resume: i % 3 === 0 ? `https://example.com/resume-${i}.pdf` : null,
-            createdAt: new Date(2024, 0, Math.floor(Math.random() * 30) + 1).toISOString(),
-            user: {
-                id: i + 100,
-                name: names[i % names.length] + ` ${i}`,
-                email: `applicant${i}@example.com`,
-                role: 'USER' as const,
-                profileImage: i % 4 === 0 ? `https://images.unsplash.com/photo-${1500000000000 + i}?w=100&h=100&fit=crop&crop=face` : null,
-                createdAt: new Date(2024, 0, Math.floor(Math.random() * 30) + 1).toISOString(),
-                updatedAt: new Date(2024, 0, Math.floor(Math.random() * 30) + 1).toISOString()
-            }
-        });
-    }
-    return requests;
-};
-
-const mockRequests = generateMockRequests();
-
-const AdminOrganizerRequestsPage: React.FC = () => {
-    const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+const AdminReviewRequestsPage: React.FC = () => {
+    const navigate = useNavigate();
+    const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage] = useState(10);
-    const [processedRequests, setProcessedRequests] = useState<{ [key: number]: 'approved' | 'rejected' }>({});
 
-    // Filter requests
-    const filteredRequests = mockRequests.filter(request => {
-        const matchesSearch = request.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            request.user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            request.overview.toLowerCase().includes(searchTerm.toLowerCase());
+    const {
+        allRequests,
+        pagination,
+        isLoading,
+        isMutating,
+        error,
+        fetchAllRequests,
+        updateRequestStatus,
+        clearError
+    } = useOrganizerRequestStore();
 
-        const requestStatus = processedRequests[request.id] || 'pending';
-        const matchesStatus = statusFilter === 'all' || requestStatus === statusFilter;
+    useEffect(() => {
+        fetchRequests();
+    }, [statusFilter, currentPage]);
 
-        return matchesSearch && matchesStatus;
-    });
+    const fetchRequests = () => {
+        const query = {
+            page: currentPage,
+            limit: 10,
+            // Backend only supports sortOrder, not status filter yet
+            sortOrder: 'desc' as 'asc' | 'desc'
+        };
+        fetchAllRequests(query);
+    };
 
-    // Pagination
-    const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const paginatedRequests = filteredRequests.slice(startIndex, startIndex + itemsPerPage);
-
-    const handleAction = (action: 'approve' | 'reject' | 'view', request: OrganizerRequest) => {
-        if (action === 'approve' || action === 'reject') {
-            setProcessedRequests(prev => ({
-                ...prev,
-                [request.id]: action === 'approve' ? 'approved' : 'rejected'
-            }));
-            alert(`Request ${action}d for ${request.user.name} (mock action)`);
-        } else {
-            alert(`View request details for ${request.user.name} (mock action)`);
+    const handleStatusUpdate = async (requestId: number, newStatus: 'ACCEPTED' | 'REJECTED' | 'PENDING') => {
+        try {
+            await updateRequestStatus(requestId, { status: newStatus });
+            message.success(`Request ${newStatus.toLowerCase()} successfully`);
+            fetchRequests(); // Refresh the list
+        } catch (error) {
+            message.error('Failed to update request status');
         }
     };
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'approved':
-                return 'bg-success-100 text-success-700';
-            case 'rejected':
-                return 'bg-error-100 text-error-700';
-            case 'pending':
-                return 'bg-warning-100 text-warning-700';
-            default:
-                return 'bg-neutral-100 text-neutral-700';
+    const handlePageChange = (newPage: number) => {
+        if (newPage >= 1 && newPage <= pagination.totalPages) {
+            setCurrentPage(newPage);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     };
 
-    const getStatusIcon = (status: string) => {
-        switch (status) {
-            case 'approved':
-                return CheckCircle;
-            case 'rejected':
-                return XCircle;
-            case 'pending':
-                return Clock;
-            default:
-                return Clock;
+    const getPageNumbers = () => {
+        const pages = [];
+        const maxVisible = 5;
+        let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+        let end = Math.min(pagination.totalPages, start + maxVisible - 1);
+
+        if (end - start + 1 < maxVisible) {
+            start = Math.max(1, end - maxVisible + 1);
         }
+
+        for (let i = start; i <= end; i++) {
+            pages.push(i);
+        }
+        return pages;
     };
 
-    const pendingCount = mockRequests.filter(r => !processedRequests[r.id]).length;
-    const approvedCount = Object.values(processedRequests).filter(s => s === 'approved').length;
-    const rejectedCount = Object.values(processedRequests).filter(s => s === 'rejected').length;
+    // Filter requests by status (client-side for now since backend doesn't support it)
+    const filteredRequests = statusFilter === 'ALL'
+        ? allRequests
+        : allRequests.filter(request => request.status === statusFilter);
+
+    if (isLoading && allRequests.length === 0) {
+        return (
+            <Container>
+                <div className="py-8">
+                    <div className="flex items-center justify-center py-12">
+                        <div className="text-center">
+                            <LoadingSpinner size="lg" />
+                            <p className="mt-4 text-neutral-600">Loading requests...</p>
+                        </div>
+                    </div>
+                </div>
+            </Container>
+        );
+    }
 
     return (
         <Container>
             <div className="py-8">
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-neutral-900 mb-2">Organizer Requests</h1>
-                    <p className="text-neutral-600">Review and manage organizer applications</p>
+                    <div className="flex items-center gap-4 mb-4">
+                        <Button
+                            variant="ghost"
+                            onClick={() => navigate('/admin')}
+                            className="flex items-center gap-2"
+                        >
+                            <ArrowLeft className="w-4 h-4" />
+                            Back to Dashboard
+                        </Button>
+                    </div>
+                    <h1 className="text-3xl font-bold text-neutral-900 mb-2">Review Organizer Requests</h1>
+                    <p className="text-neutral-600">Manage and review organizer applications</p>
                 </div>
 
-                {/* Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                    <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-4">
-                        <div className="text-center">
-                            <p className="text-2xl font-bold text-neutral-900">{mockRequests.length}</p>
-                            <p className="text-sm text-neutral-600">Total Requests</p>
-                        </div>
-                    </div>
-                    <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-4">
-                        <div className="text-center">
-                            <p className="text-2xl font-bold text-warning-600">{pendingCount}</p>
-                            <p className="text-sm text-neutral-600">Pending Review</p>
-                        </div>
-                    </div>
-                    <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-4">
-                        <div className="text-center">
-                            <p className="text-2xl font-bold text-success-600">{approvedCount}</p>
-                            <p className="text-sm text-neutral-600">Approved</p>
-                        </div>
-                    </div>
-                    <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-4">
-                        <div className="text-center">
-                            <p className="text-2xl font-bold text-error-600">{rejectedCount}</p>
-                            <p className="text-sm text-neutral-600">Rejected</p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Filters */}
-                <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-4 mb-6">
-                    <div className="flex flex-col sm:flex-row gap-4">
-                        <div className="flex-1">
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-neutral-400" />
-                                <Input
-                                    placeholder="Search by name, email, or overview..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-10"
-                                />
-                            </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <Filter className="w-4 h-4 text-neutral-500" />
-                            <select
-                                value={statusFilter}
-                                onChange={(e) => setStatusFilter(e.target.value as any)}
-                                className="px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                            >
-                                <option value="all">All Status</option>
-                                <option value="pending">Pending</option>
-                                <option value="approved">Approved</option>
-                                <option value="rejected">Rejected</option>
-                            </select>
-                        </div>
+                {/* Status Filter */}
+                <div className="mb-6">
+                    <div className="flex items-center space-x-4">
+                        <label className="text-sm font-medium text-neutral-700">Filter by Status:</label>
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => {
+                                setStatusFilter(e.target.value as StatusFilter);
+                                setCurrentPage(1);
+                            }}
+                            className="px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        >
+                            <option value="ALL">All Requests</option>
+                            <option value="PENDING">Pending</option>
+                            <option value="ACCEPTED">Accepted</option>
+                            <option value="REJECTED">Rejected</option>
+                        </select>
                     </div>
                 </div>
 
-                {/* Requests Table */}
-                <div className="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="bg-neutral-50 border-b border-neutral-200">
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                                        Applicant
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                                        Overview
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                                        Applied
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                                        Status
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                                        Actions
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-neutral-200">
-                                {paginatedRequests.map((request) => {
-                                    const status = processedRequests[request.id] || 'pending';
-                                    const StatusIcon = getStatusIcon(status);
-
-                                    return (
-                                        <tr key={request.id} className="hover:bg-neutral-50">
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex items-center">
-                                                    <div className="w-10 h-10 rounded-full bg-neutral-200 flex items-center justify-center overflow-hidden">
-                                                        {request.user.profileImage ? (
-                                                            <img
-                                                                src={request.user.profileImage}
-                                                                alt={request.user.name}
-                                                                className="w-full h-full object-cover"
-                                                            />
-                                                        ) : (
-                                                            <span className="text-neutral-500 text-sm font-medium">
-                                                                {request.user.name.charAt(0)}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <div className="ml-4">
-                                                        <div className="text-sm font-medium text-neutral-900">{request.user.name}</div>
-                                                        <div className="text-sm text-neutral-500">{request.user.email}</div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="text-sm text-neutral-900 max-w-xs">
-                                                    {request.overview.length > 80
-                                                        ? `${request.overview.substring(0, 80)}...`
-                                                        : request.overview
-                                                    }
-                                                </div>
-                                                {request.resume && (
-                                                    <div className="flex items-center mt-2">
-                                                        <FileText className="w-4 h-4 text-primary-600 mr-1" />
-                                                        <span className="text-xs text-primary-600">Resume attached</span>
-                                                    </div>
-                                                )}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">
-                                                <div className="flex items-center">
-                                                    <Calendar className="w-4 h-4 mr-2" />
-                                                    {new Date(request.createdAt).toLocaleDateString()}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex items-center">
-                                                    <StatusIcon className="w-4 h-4 mr-2" />
-                                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
-                                                        {status.charAt(0).toUpperCase() + status.slice(1)}
-                                                    </span>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                <div className="flex items-center space-x-2">
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={() => handleAction('view', request)}
-                                                    >
-                                                        <Eye className="w-4 h-4" />
-                                                    </Button>
-                                                    {request.resume && (
-                                                        <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            onClick={() => alert('Download resume (mock)')}
-                                                        >
-                                                            <Download className="w-4 h-4" />
-                                                        </Button>
-                                                    )}
-                                                    {status === 'pending' && (
-                                                        <>
-                                                            <Button
-                                                                size="sm"
-                                                                onClick={() => handleAction('approve', request)}
-                                                                className="bg-success-600 hover:bg-success-700"
-                                                            >
-                                                                <Check className="w-4 h-4" />
-                                                            </Button>
-                                                            <Button
-                                                                size="sm"
-                                                                onClick={() => handleAction('reject', request)}
-                                                                className="bg-error-600 hover:bg-error-700"
-                                                            >
-                                                                <X className="w-4 h-4" />
-                                                            </Button>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {/* Pagination */}
-                    <div className="px-6 py-4 border-t border-neutral-200">
+                {/* Error Display */}
+                {error && (
+                    <div className="mb-6 rounded-md border border-error-200 bg-error-50 p-4 text-error-700">
                         <div className="flex items-center justify-between">
-                            <div className="text-sm text-neutral-500">
-                                Showing {startIndex + 1} to {Math.min(startIndex + itemsPerPage, filteredRequests.length)} of {filteredRequests.length} requests
+                            <span>{error}</span>
+                            <div className="flex gap-2">
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={fetchRequests}
+                                >
+                                    Retry
+                                </Button>
+                                <Button size="sm" variant="ghost" onClick={clearError}>
+                                    Dismiss
+                                </Button>
                             </div>
-                            <Pagination
-                                currentPage={currentPage}
-                                totalPages={totalPages}
-                                onPageChange={setCurrentPage}
-                            />
                         </div>
                     </div>
+                )}
+
+                {/* Requests List */}
+                <div className="space-y-4">
+                    {filteredRequests.map((request) => (
+                        <div
+                            key={request.id}
+                            className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6"
+                        >
+                            <div className="flex items-start justify-between mb-4">
+                                <div className="flex items-center space-x-3">
+                                    <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                                        <User className="w-5 h-5 text-primary-600" />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-semibold text-neutral-900">
+                                            {request.user?.name || 'Unknown User'}
+                                        </h3>
+                                        <p className="text-sm text-neutral-600">
+                                            {request.user?.email}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <span className={`px-3 py-1 rounded-full text-xs font-medium border ${request.status === 'PENDING' ? 'bg-warning-100 text-warning-700 border-warning-200' :
+                                        request.status === 'ACCEPTED' ? 'bg-success-100 text-success-700 border-success-200' :
+                                            'bg-error-100 text-error-700 border-error-200'
+                                        }`}>
+                                        {request.status === 'PENDING' ? <Clock className="w-4 h-4 text-warning-600" /> :
+                                            request.status === 'ACCEPTED' ? <CheckCircle className="w-4 h-4 text-success-600" /> :
+                                                <XCircle className="w-4 h-4 text-error-600" />}
+                                        <span className="ml-1">{request.status}</span>
+                                    </span>
+                                </div>
+                            </div>
+
+                            {request.overview && (
+                                <div className="mb-4">
+                                    <h4 className="text-sm font-medium text-neutral-700 mb-2">Overview</h4>
+                                    <p className="text-neutral-600 text-sm">{request.overview}</p>
+                                </div>
+                            )}
+
+                            {request.resume && (
+                                <div className="mb-4">
+                                    <h4 className="text-sm font-medium text-neutral-700 mb-2">Resume</h4>
+                                    <div className="flex items-center space-x-3">
+                                        <FileText className="w-5 h-5 text-primary-600" />
+                                        <a
+                                            href={request.resume}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-primary-600 hover:text-primary-700 underline cursor-pointer"
+                                        >
+                                            View Resume
+                                        </a>
+                                        <span className="text-neutral-400">•</span>
+                                        <a
+                                            href={request.resume}
+                                            download
+                                            className="text-sm text-neutral-600 hover:text-neutral-700 underline cursor-pointer"
+                                        >
+                                            Download
+                                        </a>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-4 text-sm text-neutral-500">
+                                    <div className="flex items-center space-x-1">
+                                        <Calendar className="w-4 h-4" />
+                                        <span>Submitted: {new Date(request.createdAt).toLocaleDateString()}</span>
+                                    </div>
+
+                                </div>
+
+                                <div className="flex space-x-2">
+                                    {request.status === 'PENDING' && (
+                                        <>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => handleStatusUpdate(request.id, 'ACCEPTED')}
+                                                disabled={isMutating}
+                                                loading={isMutating}
+                                            >
+                                                <CheckCircle className="w-4 h-4 mr-1" />
+                                                Accept
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="danger"
+                                                onClick={() => handleStatusUpdate(request.id, 'REJECTED')}
+                                                disabled={isMutating}
+                                                loading={isMutating}
+                                            >
+                                                <XCircle className="w-4 h-4 mr-1" />
+                                                Reject
+                                            </Button>
+                                        </>
+                                    )}
+                                    {request.status !== 'PENDING' && (
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => handleStatusUpdate(request.id, 'PENDING')}
+                                            disabled={isMutating}
+                                        >
+                                            Reset to Pending
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    ))}
                 </div>
+
+                {/* Empty State */}
+                {filteredRequests.length === 0 && !isLoading && (
+                    <div className="text-center py-12">
+                        <FileText className="w-12 h-12 text-neutral-400 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-neutral-900 mb-2">No requests found</h3>
+                        <p className="text-neutral-600">
+                            {statusFilter === 'ALL'
+                                ? 'There are no organizer requests at the moment.'
+                                : `There are no ${statusFilter.toLowerCase()} requests.`
+                            }
+                        </p>
+                    </div>
+                )}
+
+                {/* Pagination - Using Your Exact Pattern */}
+                {pagination.totalPages > 1 && (
+                    <div className="flex items-center justify-between border-t border-neutral-200 pt-6 mt-6">
+                        {/* Info */}
+                        <div className="text-sm text-neutral-700">
+                            Page {pagination.currentPage} of {pagination.totalPages} • {pagination.totalItems} total requests
+                        </div>
+
+                        {/* Buttons */}
+                        <div className="flex items-center space-x-2">
+                            {/* Prev */}
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handlePageChange(pagination.currentPage - 1)}
+                                disabled={pagination.currentPage === 1 || isLoading}
+                            >
+                                <ChevronLeft className="w-4 h-4 mr-1" />
+                                Previous
+                            </Button>
+
+                            {/* Page Numbers */}
+                            <div className="hidden sm:flex space-x-1">
+                                {getPageNumbers().map((pageNum) => (
+                                    <Button
+                                        key={pageNum}
+                                        variant={pageNum === pagination.currentPage ? "primary" : "ghost"}
+                                        size="sm"
+                                        onClick={() => handlePageChange(pageNum)}
+                                        disabled={isLoading}
+                                        className="min-w-10"
+                                    >
+                                        {pageNum}
+                                    </Button>
+                                ))}
+                            </div>
+
+                            {/* Mobile Info */}
+                            <div className="sm:hidden text-sm text-neutral-600">
+                                {pagination.currentPage} / {pagination.totalPages}
+                            </div>
+
+                            {/* Next */}
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handlePageChange(pagination.currentPage + 1)}
+                                disabled={pagination.currentPage === pagination.totalPages || isLoading}
+                            >
+                                Next
+                                <ChevronRight className="w-4 h-4 ml-1" />
+                            </Button>
+                        </div>
+                    </div>
+                )}
             </div>
         </Container>
     );
 };
 
-export default AdminOrganizerRequestsPage;
+export default AdminReviewRequestsPage;

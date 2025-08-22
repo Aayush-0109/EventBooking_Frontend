@@ -1,84 +1,29 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Users,
     Calendar,
     FileText,
     TrendingUp,
-    Activity,
-    CheckCircle,
     Clock
 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Container from '../components/layout/Container';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
 import websocketService from '../services/Websocket.service';
 import { useSocketStore } from '../store/socketStore';
+import useOrganizerRequestStore from '../store/organizerRequestStore';
 
 
-const mockRecentActivity = [
-    {
-        id: 1,
-        type: 'user_registered',
-        message: 'New user John Doe registered',
-        timestamp: '2024-01-15T10:30:00Z',
-        icon: Users,
-        color: 'text-blue-600'
-    },
-    {
-        id: 2,
-        type: 'event_created',
-        message: 'New event "Tech Conference 2024" created',
-        timestamp: '2024-01-15T09:15:00Z',
-        icon: Calendar,
-        color: 'text-green-600'
-    },
-    {
-        id: 3,
-        type: 'organizer_request',
-        message: 'New organizer request submitted',
-        timestamp: '2024-01-15T08:45:00Z',
-        icon: FileText,
-        color: 'text-orange-600'
-    },
-    {
-        id: 4,
-        type: 'event_completed',
-        message: 'Event "Music Festival" completed',
-        timestamp: '2024-01-14T18:00:00Z',
-        icon: CheckCircle,
-        color: 'text-success-600'
-    }
-];
 
-const mockPendingRequests = [
-    {
-        id: 1,
-        type: 'organizer_request',
-        title: 'Organizer Application - Tech Events Inc',
-        description: 'Request to become an event organizer',
-        timestamp: '2024-01-15T10:00:00Z',
-        priority: 'high'
-    },
-    {
-        id: 2,
-        type: 'event_approval',
-        title: 'Event Approval - Music Festival',
-        description: 'Event waiting for admin approval',
-        timestamp: '2024-01-15T09:30:00Z',
-        priority: 'medium'
-    },
-    {
-        id: 3,
-        type: 'user_report',
-        title: 'User Report - Inappropriate Content',
-        description: 'User reported for inappropriate behavior',
-        timestamp: '2024-01-15T08:15:00Z',
-        priority: 'high'
-    }
-];
 
 const AdminDashboardPage: React.FC = () => {
+    const navigate = useNavigate();
     const [onlineUsers, setOnlineUsers] = useState(0);
-    const{isConnected} = useSocketStore()
+    const { isConnected } = useSocketStore();
+
+    const { allRequests, fetchAllRequests, isLoading: requestsLoading } = useOrganizerRequestStore();
+
     const [stats, setStats] = useState({
         totalUsers: 0,
         totalEvents: 0,
@@ -89,12 +34,15 @@ const AdminDashboardPage: React.FC = () => {
     });
 
     useEffect(() => {
-        
-        if(!isConnected) return
+        // Fetch requests to get pending ones for dashboard display
+        fetchAllRequests({ page: 1, limit: 10, sortOrder: 'desc' });
+    }, [fetchAllRequests]);
+
+    useEffect(() => {
+        if (!isConnected) return;
         websocketService.on('dashboard_stats_update', (newStats) => {
             console.log('Received stats update:', newStats);
             setStats(newStats);
-
         });
 
         websocketService.on('dashboard_online_update', (data) => {
@@ -110,18 +58,7 @@ const AdminDashboardPage: React.FC = () => {
         };
     }, [isConnected]);
 
-    const getPriorityColor = (priority: string) => {
-        switch (priority) {
-            case 'high':
-                return 'bg-error-100 text-error-700';
-            case 'medium':
-                return 'bg-warning-100 text-warning-700';
-            case 'low':
-                return 'bg-success-100 text-success-700';
-            default:
-                return 'bg-neutral-100 text-neutral-700';
-        }
-    };
+
 
     return (
         <Container>
@@ -208,54 +145,98 @@ const AdminDashboardPage: React.FC = () => {
                     <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-xl font-semibold text-neutral-900">Recent Activity</h2>
-                            <Button variant="outline" size="sm">View All</Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => navigate('/admin/users')}
+                            >
+                                View All
+                            </Button>
                         </div>
 
                         <div className="space-y-4">
-                            {mockRecentActivity.map((activity) => (
-                                <div key={activity.id} className="flex items-start space-x-3">
-                                    <div className={`p-2 rounded-full bg-neutral-100`}>
-                                        <activity.icon className={`w-4 h-4 ${activity.color}`} />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium text-neutral-900">{activity.message}</p>
-                                        <p className="text-sm text-neutral-500">
-                                            {new Date(activity.timestamp).toLocaleString()}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
+                            <div className="text-center py-4">
+                                <p className="text-sm text-neutral-500">Recent activity will be displayed here</p>
+                            </div>
                         </div>
                     </div>
 
                     {/* Pending Requests */}
                     <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-semibold text-neutral-900">Pending Requests</h2>
-                            <Button variant="outline" size="sm">View All</Button>
+                            <div>
+                                <h2 className="text-xl font-semibold text-neutral-900">Pending Organizer Requests</h2>
+                                <p className="text-sm text-neutral-600">
+                                    {allRequests.filter(req => req.status === 'PENDING').length} pending
+                                </p>
+                            </div>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => navigate('/admin/organizer-requests')}
+                            >
+                                View All
+                            </Button>
                         </div>
 
                         <div className="space-y-4">
-                            {mockPendingRequests.map((request) => (
-                                <div key={request.id} className="border border-neutral-200 rounded-lg p-4">
-                                    <div className="flex items-start justify-between mb-2">
-                                        <h3 className="font-medium text-neutral-900">{request.title}</h3>
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(request.priority)}`}>
-                                            {request.priority}
-                                        </span>
-                                    </div>
-                                    <p className="text-sm text-neutral-600 mb-3">{request.description}</p>
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-sm text-neutral-500">
-                                            {new Date(request.timestamp).toLocaleString()}
-                                        </span>
-                                        <div className="flex space-x-2">
-                                            <Button size="sm" variant="outline">Review</Button>
-                                            <Button size="sm">Approve</Button>
-                                        </div>
-                                    </div>
+                            {requestsLoading ? (
+                                <div className="flex items-center justify-center py-4">
+                                    <LoadingSpinner size="sm" />
                                 </div>
-                            ))}
+                            ) : allRequests.filter(req => req.status === 'PENDING').length === 0 ? (
+                                <div className="text-center py-4">
+                                    <p className="text-sm text-neutral-500">No pending requests</p>
+                                </div>
+                            ) : (
+                                allRequests
+                                    .filter(req => req.status === 'PENDING')
+                                    .slice(0, 3)
+                                    .map((request) => (
+                                        <div key={request.id} className="border border-neutral-200 rounded-lg p-4">
+                                            <div className="flex items-start justify-between mb-2">
+                                                <h3 className="font-medium text-neutral-900">
+                                                    {request.user?.name || 'Unknown User'}
+                                                </h3>
+                                                <span className="px-2 py-1 rounded-full text-xs font-medium bg-warning-100 text-warning-700">
+                                                    PENDING
+                                                </span>
+                                            </div>
+                                            <p className="text-sm text-neutral-600 mb-3">
+                                                {request.overview || 'No overview provided'}
+                                            </p>
+                                            {request.resume && (
+                                                <div className="mb-3">
+                                                    <div className="flex items-center space-x-2 text-sm text-neutral-600">
+                                                        <FileText className="w-4 h-4 text-primary-600" />
+                                                        <a
+                                                            href={request.resume}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-primary-600 hover:text-primary-700 underline cursor-pointer"
+                                                        >
+                                                            View Resume
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-sm text-neutral-500">
+                                                    {new Date(request.createdAt).toLocaleString()}
+                                                </span>
+                                                <div className="flex space-x-2">
+
+                                                    <Button
+                                                        size="sm"
+                                                        onClick={() => navigate('/admin/organizer-requests')}
+                                                    >
+                                                        Approve
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
+                            )}
                         </div>
                     </div>
                 </div>
@@ -264,22 +245,31 @@ const AdminDashboardPage: React.FC = () => {
                 <div className="mt-8 bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
                     <h2 className="text-xl font-semibold text-neutral-900 mb-6">Quick Actions</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <Button className="justify-start" variant="outline">
+                        <Button
+                            className="justify-start"
+                            variant="outline"
+                            onClick={() => navigate('/admin/users')}
+                        >
                             <Users className="w-4 h-4 mr-2" />
                             Manage Users
                         </Button>
-                        <Button className="justify-start" variant="outline">
+                        <Button
+                            className="justify-start"
+                            variant="outline"
+                            onClick={() => navigate('/admin/events')}
+                        >
                             <Calendar className="w-4 h-4 mr-2" />
                             Manage Events
                         </Button>
-                        <Button className="justify-start" variant="outline">
+                        <Button
+                            className="justify-start"
+                            variant="outline"
+                            onClick={() => navigate('/admin/organizer-requests')}
+                        >
                             <FileText className="w-4 h-4 mr-2" />
                             Review Requests
                         </Button>
-                        {/* <Button className="justify-start" variant="outline">
-                            <Activity className="w-4 h-4 mr-2" />
-                            View Analytics
-                        </Button> */}
+
                     </div>
                 </div>
             </div>

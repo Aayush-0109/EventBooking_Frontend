@@ -12,8 +12,8 @@ import { CreateEventPage } from './pages/CreateEventPage';
 import { UpdateEventPage } from './pages/UpdateEventPage';
 import { OrganizerRequestPage } from './pages/OrganizerRequestPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
-import AdminUsersPage from './pages/AdminUsersPage';
-import AdminEventsPage from './pages/AdminEventsPage';
+import AdminManageUsersPage from './pages/AdminManageUsersPage';
+import AdminManageEventsPage from './pages/AdminManageEventsPage';
 import AdminOrganizerRequestsPage from './pages/AdminOrganizerRequestsPage';
 import BookingDetailsPage from './pages/BookingDetailsPage';
 import NearbyEventsPage from './pages/NearbyEventsPage';
@@ -93,13 +93,13 @@ function App() {
 
                 <Route path="/admin/users" element={
                   <ProtectedRoute requiredRole="ADMIN">
-                    <AdminUsersPage />
+                    <AdminManageUsersPage />
                   </ProtectedRoute>
                 } />
 
                 <Route path="/admin/events" element={
                   <ProtectedRoute requiredRole="ADMIN">
-                    <AdminEventsPage />
+                    <AdminManageEventsPage />
                   </ProtectedRoute>
                 } />
 
