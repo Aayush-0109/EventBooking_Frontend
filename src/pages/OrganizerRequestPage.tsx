@@ -4,8 +4,9 @@ import { OrganizerRequestForm } from '../components/features/OrganizerRequestFor
 import { message } from 'antd';
 import useOrganizerRequestStore from '../store/organizerRequestStore';
 import { CreateOrganizerRequestData } from '../services';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 export const OrganizerRequestPage: React.FC = () => {
+    const location = useLocation()
     const{createRequest} =useOrganizerRequestStore();
     const navigate = useNavigate()
     const handleSubmit = async (data: CreateOrganizerRequestData) => {
@@ -15,6 +16,7 @@ export const OrganizerRequestPage: React.FC = () => {
         try {
             await createRequest(data)
             message.success("Organizer Request Submitted Successfully")
+            navigate(location.state?.from || '/')
         } catch (error) {
             
         }
@@ -24,7 +26,7 @@ export const OrganizerRequestPage: React.FC = () => {
     };
 
     const handleCancel = () => {
-        navigate('/')
+        navigate(location.state?.from || '/')
     };
 
     return (

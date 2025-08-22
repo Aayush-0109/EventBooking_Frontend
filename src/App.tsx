@@ -22,99 +22,102 @@ import { AuthProvider } from './components/auth/AuthProvider';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import UnauthorizedPage from './pages/unauthorizedPage';
 import NotFoundPage from './pages/NotFoundPage';
+import SocketWrapper from './components/auth/SocketConnector';
 
 function App() {
   return (
     <Router>
       <AuthProvider>
-        <div className="min-h-screen flex flex-col bg-gradient-to-br from-primary-50 to-primary-100">
-          <Header />
-          <Container className="flex-1 py-8">
-            <Routes>
+        <SocketWrapper>
+          <div className="min-h-screen flex flex-col bg-gradient-to-br from-primary-50 to-primary-100">
+            <Header />
+            <Container className="flex-1 py-8">
+              <Routes>
 
 
-              <Route path="/" element={<HomePage />} />
-              <Route path="/events" element={<EventsPage />} />
-              <Route path="/events/:id" element={<EventDetailsPage />} />
-              <Route path="/nearby-events" element={<NearbyEventsPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
+                <Route path="/" element={<HomePage />} />
+                <Route path="/events" element={<EventsPage />} />
+                <Route path="/events/:id" element={<EventDetailsPage />} />
+                <Route path="/nearby-events" element={<NearbyEventsPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
 
 
-              <Route path="/dashboard" element={
-                <ProtectedRoute >
-                  <UserDashboard />
-                </ProtectedRoute>
-              } />
+                <Route path="/dashboard" element={
+                  <ProtectedRoute >
+                    <UserDashboard />
+                  </ProtectedRoute>
+                } />
 
-              {/* 🎯 ROLE-BASED PROTECTED ROUTES */}
+                {/* 🎯 ROLE-BASED PROTECTED ROUTES */}
 
-              {/* USER role only - Create organizer requests */}
-              <Route path="/organizer-request" element={
-                <ProtectedRoute requiredRole="USER">
-                  <OrganizerRequestPage />
-                </ProtectedRoute>
-              } />
+                {/* USER role only - Create organizer requests */}
+                <Route path="/organizer-request" element={
+                  <ProtectedRoute requiredRole="USER">
+                    <OrganizerRequestPage />
+                  </ProtectedRoute>
+                } />
 
-              {/* Any authenticated user can view their bookings */}
-              <Route path="/booking/:id" element={
-                <ProtectedRoute >
-                  <BookingDetailsPage />
-                </ProtectedRoute>
-              } />
+                {/* Any authenticated user can view their bookings */}
+                <Route path="/booking/:id" element={
+                  <ProtectedRoute >
+                    <BookingDetailsPage />
+                  </ProtectedRoute>
+                } />
 
-              {/* 👤 ORGANIZER + ADMIN ROUTES - Event Management */}
-              <Route path="/organizer/dashboard" element={
-                <ProtectedRoute requiredRole={["ORGANIZER", "ADMIN"]}>
-                  <OrganizerDashboard />
-                </ProtectedRoute>
-              } />
+                {/* 👤 ORGANIZER + ADMIN ROUTES - Event Management */}
+                <Route path="/organizer/dashboard" element={
+                  <ProtectedRoute requiredRole={["ORGANIZER", "ADMIN"]}>
+                    <OrganizerDashboard />
+                  </ProtectedRoute>
+                } />
 
-              <Route path="/create-event" element={
-                <ProtectedRoute requiredRole={["ORGANIZER", "ADMIN"]}>
-                  <CreateEventPage />
-                </ProtectedRoute>
-              } />
+                <Route path="/create-event" element={
+                  <ProtectedRoute requiredRole={["ORGANIZER", "ADMIN"]}>
+                    <CreateEventPage />
+                  </ProtectedRoute>
+                } />
 
-              <Route path="/update-event/:id" element={
-                <ProtectedRoute requiredRole={["ORGANIZER", "ADMIN"]}>
-                  <UpdateEventPage />
-                </ProtectedRoute>
-              } />
+                <Route path="/update-event/:id" element={
+                  <ProtectedRoute requiredRole={["ORGANIZER", "ADMIN"]}>
+                    <UpdateEventPage />
+                  </ProtectedRoute>
+                } />
 
-              {/* 👑 ADMIN ONLY ROUTES */}
-              <Route path="/admin" element={
-                <ProtectedRoute requiredRole="ADMIN">
-                  <AdminDashboardPage />
-                </ProtectedRoute>
-              } />
+                {/* 👑 ADMIN ONLY ROUTES */}
+                <Route path="/admin" element={
+                  <ProtectedRoute requiredRole="ADMIN">
+                    <AdminDashboardPage />
+                  </ProtectedRoute>
+                } />
 
-              <Route path="/admin/users" element={
-                <ProtectedRoute requiredRole="ADMIN">
-                  <AdminUsersPage />
-                </ProtectedRoute>
-              } />
+                <Route path="/admin/users" element={
+                  <ProtectedRoute requiredRole="ADMIN">
+                    <AdminUsersPage />
+                  </ProtectedRoute>
+                } />
 
-              <Route path="/admin/events" element={
-                <ProtectedRoute requiredRole="ADMIN">
-                  <AdminEventsPage />
-                </ProtectedRoute>
-              } />
+                <Route path="/admin/events" element={
+                  <ProtectedRoute requiredRole="ADMIN">
+                    <AdminEventsPage />
+                  </ProtectedRoute>
+                } />
 
-              {/* Admin manages organizer requests */}
-              <Route path="/admin/organizer-requests" element={
-                <ProtectedRoute requiredRole="ADMIN">
-                  <AdminOrganizerRequestsPage />
-                </ProtectedRoute>
-              } />
+                {/* Admin manages organizer requests */}
+                <Route path="/admin/organizer-requests" element={
+                  <ProtectedRoute requiredRole="ADMIN">
+                    <AdminOrganizerRequestsPage />
+                  </ProtectedRoute>
+                } />
 
-              {/* 🚨 ERROR PAGES */}
-              <Route path="/unauthorized" element={<UnauthorizedPage />} />
-              <Route path="*" element={<NotFoundPage />} />
-            </Routes>
-          </Container>
-          <Footer />
-        </div>
+                {/* 🚨 ERROR PAGES */}
+                <Route path="/unauthorized" element={<UnauthorizedPage />} />
+                <Route path="*" element={<NotFoundPage />} />
+              </Routes>
+            </Container>
+            <Footer />
+          </div>
+        </SocketWrapper>
       </AuthProvider>
     </Router>
   );

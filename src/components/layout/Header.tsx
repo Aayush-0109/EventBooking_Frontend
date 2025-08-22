@@ -9,9 +9,11 @@ import {
     Calendar,
     ChevronDown,
     Menu,
-    X
+    X,
+    GaugeCircle
 } from 'lucide-react';
 import { message } from 'antd';
+
 
 const Header: React.FC = () => {
     const location = useLocation()
@@ -56,7 +58,7 @@ const Header: React.FC = () => {
         // }
 
         if (user?.role === 'ADMIN') {
-            authenticatedItems.push({ label: 'Admin Panel', href: '/admin' });
+            authenticatedItems.push();
         }
 
         return authenticatedItems;
@@ -85,7 +87,12 @@ const Header: React.FC = () => {
             label: 'Events Dashboard',
             href: '/organizer/dashboard',
             icon: Calendar
-        }] : []),
+        },
+        {
+            label: 'Admin Panel',
+            href: '/admin',
+            icon: GaugeCircle
+         }] : []),
     ];
 
     return (

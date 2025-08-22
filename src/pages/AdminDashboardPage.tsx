@@ -1,28 +1,18 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Users,
     Calendar,
     FileText,
     TrendingUp,
     Activity,
-    AlertTriangle,
     CheckCircle,
     Clock
 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Container from '../components/layout/Container';
+import websocketService from '../services/Websocket.service';
+import { useSocketStore } from '../store/socketStore';
 
-// Mock data for admin dashboard
-const mockStats = {
-    totalUsers: 1247,
-    totalEvents: 89,
-    pendingRequests: 12,
-    totalRevenue: 45230,
-    monthlyGrowth: 12.5,
-    activeEvents: 34,
-    completedEvents: 55,
-    totalRegistrations: 3456
-};
 
 const mockRecentActivity = [
     {
@@ -87,6 +77,39 @@ const mockPendingRequests = [
 ];
 
 const AdminDashboardPage: React.FC = () => {
+    const [onlineUsers, setOnlineUsers] = useState(0);
+    const{isConnected} = useSocketStore()
+    const [stats, setStats] = useState({
+        totalUsers: 0,
+        totalEvents: 0,
+        activeEvents: 0,
+        totalRegistrations: 0,
+        pendingRequests: 0,
+        updatedAt: ''  // Add this field
+    });
+
+    useEffect(() => {
+        
+        if(!isConnected) return
+        websocketService.on('dashboard_stats_update', (newStats) => {
+            console.log('Received stats update:', newStats);
+            setStats(newStats);
+
+        });
+
+        websocketService.on('dashboard_online_update', (data) => {
+            console.log('Received online update:', data);
+            setOnlineUsers(data.onlineUsers);
+        });
+        websocketService.emit('request_admin_stats');
+
+        // Cleanup on unmount
+        return () => {
+            websocketService.off('dashboard_stats_update');
+            websocketService.off('dashboard_online_update');
+        };
+    }, [isConnected]);
+
     const getPriorityColor = (priority: string) => {
         switch (priority) {
             case 'high':
@@ -105,9 +128,26 @@ const AdminDashboardPage: React.FC = () => {
             <div className="py-8">
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-neutral-900 mb-2">Admin Dashboard</h1>
-                    <p className="text-neutral-600">Overview of platform activity and management</p>
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <h1 className="text-3xl font-bold text-neutral-900 mb-2">Admin Dashboard</h1>
+                            <p className="text-neutral-600">Overview of platform activity and management</p>
+                        </div>
+                        {stats.updatedAt && (
+                            <div className="text-sm text-gray-500 text-right">
+                                <div>Last Updated</div>
+                                <div>{new Date(stats.updatedAt).toLocaleString()}</div>
+                            </div>
+                        )}
+                    </div>
                 </div>
+
+                {/* Connection Status */}
+                <div className="mb-4 text-gray-600">
+                    Online Users: {onlineUsers}
+                </div>
+
+
 
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -115,8 +155,7 @@ const AdminDashboardPage: React.FC = () => {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-neutral-600">Total Users</p>
-                                <p className="text-2xl font-bold text-neutral-900">{mockStats.totalUsers.toLocaleString()}</p>
-                                <p className="text-sm text-success-600 mt-1">+{mockStats.monthlyGrowth}% this month</p>
+                                <p className="text-2xl font-bold text-neutral-900">{stats.totalUsers.toLocaleString()}</p>
                             </div>
                             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                                 <Users className="w-6 h-6 text-blue-600" />
@@ -128,8 +167,8 @@ const AdminDashboardPage: React.FC = () => {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-neutral-600">Total Events</p>
-                                <p className="text-2xl font-bold text-neutral-900">{mockStats.totalEvents}</p>
-                                <p className="text-sm text-neutral-600 mt-1">{mockStats.activeEvents} active</p>
+                                <p className="text-2xl font-bold text-neutral-900">{stats.totalEvents}</p>
+                                <p className="text-sm text-neutral-600 mt-1">{stats.activeEvents} active</p>
                             </div>
                             <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
                                 <Calendar className="w-6 h-6 text-primary-600" />
@@ -141,7 +180,7 @@ const AdminDashboardPage: React.FC = () => {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-neutral-600">Pending Requests</p>
-                                <p className="text-2xl font-bold text-neutral-900">{mockStats.pendingRequests}</p>
+                                <p className="text-2xl font-bold text-neutral-900">{stats.pendingRequests}</p>
                                 <p className="text-sm text-warning-600 mt-1">Requires attention</p>
                             </div>
                             <div className="w-12 h-12 bg-warning-100 rounded-lg flex items-center justify-center">
@@ -154,7 +193,7 @@ const AdminDashboardPage: React.FC = () => {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-neutral-600">Total Registrations</p>
-                                <p className="text-2xl font-bold text-neutral-900">{mockStats.totalRegistrations.toLocaleString()}</p>
+                                <p className="text-2xl font-bold text-neutral-900">{stats.totalRegistrations.toLocaleString()}</p>
                                 <p className="text-sm text-success-600 mt-1">Growing steadily</p>
                             </div>
                             <div className="w-12 h-12 bg-success-100 rounded-lg flex items-center justify-center">
@@ -237,10 +276,10 @@ const AdminDashboardPage: React.FC = () => {
                             <FileText className="w-4 h-4 mr-2" />
                             Review Requests
                         </Button>
-                        <Button className="justify-start" variant="outline">
+                        {/* <Button className="justify-start" variant="outline">
                             <Activity className="w-4 h-4 mr-2" />
                             View Analytics
-                        </Button>
+                        </Button> */}
                     </div>
                 </div>
             </div>

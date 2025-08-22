@@ -22,22 +22,27 @@ import useEventStore from '../store/eventStore';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { message } from 'antd';
+import WebsocketService from '../services/Websocket.service';
+import { useSocketStore } from '../store/socketStore';
 
 
 
-const mockStats = {
-    totalEvents: 12,
-    activeEvents: 8,
-    totalRegistrations: 156,
-    thisMonth: 23
-};
+
 
 export const OrganizerDashboard: React.FC = () => {
     const location = useLocation()
     const navigate = useNavigate()
     // const { user } = useAuthStore()
     const [activeTab, setActiveTab] = useState<'overview' | 'events' | 'analytics' | 'settings'>('overview');
-    const { clearError, error, fetchMyEvents, myEvents, isLoading, deleteEvent, isMutating, pagination } = useEventStore()
+    const { clearError, error, fetchMyEvents, myEvents, isLoading, deleteEvent, isMutating, pagination } = useEventStore();
+    const { isConnected } = useSocketStore()
+    const [stats, setStats] = useState({
+        totalEvents: 0,
+        activeEvents: 0,
+        totalRegistrations: 0,
+        thisMonth: 0,
+        updatedAt: ''  // Add this field
+    })
     useEffect(() => {
         clearError()
     }, [clearError])
@@ -47,6 +52,21 @@ export const OrganizerDashboard: React.FC = () => {
             fetchMyEvents({})
         })()
     }, [fetchMyEvents])
+
+    useEffect(() => {
+        if (!isConnected) return
+        WebsocketService.on("organizer_stats_update", (newStats) => {
+            console.log(newStats);
+
+            setStats(newStats)
+        })
+        WebsocketService.emit("request_organizer_stats");
+        return () => {
+            WebsocketService.off("organizer_stats_update")
+        }
+    }, [isConnected])
+
+
 
     const deleteHandler = (id: number) => async () => {
         console.log("inside");
@@ -92,6 +112,14 @@ export const OrganizerDashboard: React.FC = () => {
                     <p className="text-neutral-600">Manage your events and track performance</p>
                 </div>
 
+                {/* Last Updated Info - Add this */}
+                {stats.updatedAt && (
+                    <div className="mb-6 text-sm text-gray-500 flex items-center space-x-2">
+                        <span>🕒</span>
+                        <span>Last Updated: {new Date(stats.updatedAt).toLocaleString()}</span>
+                    </div>
+                )}
+
                 {/* Navigation Tabs */}
                 <div className="border-b border-neutral-200 mb-8">
                     <nav className="flex space-x-8">
@@ -127,7 +155,7 @@ export const OrganizerDashboard: React.FC = () => {
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-sm font-medium text-neutral-600">Total Events</p>
-                                            <p className="text-2xl font-bold text-neutral-900">{mockStats.totalEvents}</p>
+                                            <p className="text-2xl font-bold text-neutral-900">{stats.totalEvents}</p>
                                         </div>
                                         <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
                                             <Calendar className="w-6 h-6 text-primary-600" />
@@ -139,7 +167,7 @@ export const OrganizerDashboard: React.FC = () => {
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-sm font-medium text-neutral-600">Active Events</p>
-                                            <p className="text-2xl font-bold text-neutral-900">{mockStats.activeEvents}</p>
+                                            <p className="text-2xl font-bold text-neutral-900">{stats.activeEvents}</p>
                                         </div>
                                         <div className="w-12 h-12 bg-success-100 rounded-lg flex items-center justify-center">
                                             <Calendar className="w-6 h-6 text-success-600" />
@@ -151,7 +179,7 @@ export const OrganizerDashboard: React.FC = () => {
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-sm font-medium text-neutral-600">Total Registrations</p>
-                                            <p className="text-2xl font-bold text-neutral-900">{mockStats.totalRegistrations}</p>
+                                            <p className="text-2xl font-bold text-neutral-900">{stats.totalRegistrations}</p>
                                         </div>
                                         <div className="w-12 h-12 bg-accent-100 rounded-lg flex items-center justify-center">
                                             <Users className="w-6 h-6 text-accent-600" />
@@ -163,7 +191,7 @@ export const OrganizerDashboard: React.FC = () => {
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-sm font-medium text-neutral-600">This Month</p>
-                                            <p className="text-2xl font-bold text-neutral-900">{mockStats.thisMonth}</p>
+                                            <p className="text-2xl font-bold text-neutral-900">{stats.thisMonth}</p>
                                         </div>
                                         <div className="w-12 h-12 bg-warning-100 rounded-lg flex items-center justify-center">
                                             <TrendingUp className="w-6 h-6 text-warning-600" />
@@ -249,7 +277,25 @@ export const OrganizerDashboard: React.FC = () => {
                                 </Button>
                             </div>
 
-
+                            {error && (
+                                <div className="mb-4 rounded-md border border-error-200 bg-error-50 p-4 text-error-700">
+                                    <div className="flex items-center justify-between">
+                                        <span>{typeof error === 'string' ? error : 'Failed to load your events.'}</span>
+                                        <div className="flex gap-2">
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => fetchMyEvents({ page: currentPage })}
+                                            >
+                                                Retry
+                                            </Button>
+                                            <Button size="sm" variant="ghost" onClick={clearError}>
+                                                Dismiss
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             {isLoading ? (<>
                                 <div className="flex items-center justify-center py-12">
