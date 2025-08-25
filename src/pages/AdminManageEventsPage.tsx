@@ -1,5 +1,5 @@
 // frontend/src/pages/AdminManageEventsPage.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
     Calendar,
@@ -40,12 +40,17 @@ const AdminManageEventsPage: React.FC = () => {
         deleteEvent,
         clearError
     } = useEventStore();
+     
+
 
     useEffect(() => {
-        fetchEventsData();
-    }, [currentPage, searchTerm, statusFilter, sortBy, sortOrder]);
+        if (error) {
+            message.error(error);
+            clearError()
+        }
+    }, [error]);
 
-    const fetchEventsData = () => {
+    const createQuery = useCallback(() => {
         const now = new Date();
         let startDate, endDate;
 
@@ -55,7 +60,7 @@ const AdminManageEventsPage: React.FC = () => {
             endDate = now.toISOString();
         }
 
-        const query = {
+        return {
             page: currentPage,
             limit: 10,
             search: searchTerm || undefined,
@@ -64,26 +69,34 @@ const AdminManageEventsPage: React.FC = () => {
             sortBy,
             sortOrder
         };
+    }, [currentPage, searchTerm, statusFilter, sortBy, sortOrder]);
 
-        fetchEvents(query);
-    };
+    
+    useEffect(() => {
+        fetchEvents(createQuery());
+    }, [fetchEvents, createQuery]);
 
-    const handleDeleteEvent = async (eventId: number) => {
+    
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, statusFilter, sortBy, sortOrder]);
+
+    const handleDeleteEvent = useCallback(async (eventId: number) => {
         try {
             await deleteEvent(eventId);
             message.success('Event deleted successfully');
-            fetchEventsData(); // Refresh the list
         } catch (error) {
             message.error('Failed to delete event');
         }
-    };
+    }, [deleteEvent]);
 
-    const handlePageChange = (newPage: number) => {
+    
+    const handlePageChange = useCallback((newPage: number) => {
         if (newPage >= 1 && newPage <= pagination.allEvents.totalPages) {
             setCurrentPage(newPage);
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-    };
+    }, [pagination.allEvents.totalPages]);
 
     const getPageNumbers = () => {
         const pages = [];
@@ -192,26 +205,7 @@ const AdminManageEventsPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Error Display */}
-                {error && (
-                    <div className="mb-6 rounded-md border border-error-200 bg-error-50 p-4 text-error-700">
-                        <div className="flex items-center justify-between">
-                            <span>{error}</span>
-                            <div className="flex gap-2">
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={fetchEventsData}
-                                >
-                                    Retry
-                                </Button>
-                                <Button size="sm" variant="ghost" onClick={clearError}>
-                                    Dismiss
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                
 
                 {/* Events List */}
                 <div className="space-y-4">
@@ -324,9 +318,7 @@ const AdminManageEventsPage: React.FC = () => {
                             Page {pagination.allEvents.currentPage} of {pagination.allEvents.totalPages} • {pagination.allEvents.totalItems} total events
                         </div>
 
-                        {/* Buttons */}
                         <div className="flex items-center space-x-2">
-                            {/* Prev */}
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -337,7 +329,6 @@ const AdminManageEventsPage: React.FC = () => {
                                 Previous
                             </Button>
 
-                            {/* Page Numbers */}
                             <div className="hidden sm:flex space-x-1">
                                 {getPageNumbers().map((pageNum) => (
                                     <Button
@@ -353,12 +344,10 @@ const AdminManageEventsPage: React.FC = () => {
                                 ))}
                             </div>
 
-                            {/* Mobile Info */}
                             <div className="sm:hidden text-sm text-neutral-600">
                                 {pagination.allEvents.currentPage} / {pagination.allEvents.totalPages}
                             </div>
 
-                            {/* Next */}
                             <Button
                                 variant="outline"
                                 size="sm"

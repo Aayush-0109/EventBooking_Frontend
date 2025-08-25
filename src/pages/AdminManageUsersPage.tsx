@@ -1,5 +1,5 @@
 // frontend/src/pages/AdminManageUsersPage.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Users,
@@ -7,8 +7,6 @@ import {
     Mail,
     Calendar,
     Shield,
-    Search,
-    Filter,
     Trash2,
     ChevronLeft,
     ChevronRight,
@@ -44,34 +42,46 @@ const AdminManageUsersPage: React.FC = () => {
     const { user: currentUser, } = useAuthStore();
 
     useEffect(() => {
-        fetchUsersData();
-    }, [currentPage, searchTerm, roleFilter, sortBy, sortOrder, fetchUsers]);
+        clearError();
+    }, [clearError]);
+
 
     useEffect(() => {
-        clearError();
-    }, []);
+        if (error) {
+            message.error(error);
+            clearError()
+        }
+    }, [error]);
+
+    const createQuery = useCallback(() => ({
+        page: currentPage,
+        limit: 10,
+        search: searchTerm || undefined,
+        role: roleFilter === 'ALL' ? undefined : roleFilter,
+        sortBy,
+        sortOrder
+    }), [currentPage, searchTerm, roleFilter, sortBy, sortOrder]);
 
 
+    useEffect(() => {
+        fetchUsers(createQuery());
+    }, [fetchUsers, createQuery]);
 
-    const handlePageChange = (newPage: number) => {
+
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            setCurrentPage(1);
+        }, 500)
+
+        return () => clearTimeout(timeout);
+    }, [searchTerm, roleFilter, sortBy, sortOrder]);
+
+    const handlePageChange = useCallback((newPage: number) => {
         if (newPage >= 1 && newPage <= pagination.totalPages) {
             setCurrentPage(newPage);
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-    };
-
-    // Memoize fetchUsersData to prevent infinite re-renders
-    const fetchUsersData = React.useCallback(() => {
-        const query = {
-            page: currentPage,
-            limit: 10,
-            search: searchTerm || undefined,
-            role: roleFilter === 'ALL' ? undefined : roleFilter,
-            sortBy,
-            sortOrder
-        };
-        fetchUsers(query);
-    }, [currentPage, searchTerm, roleFilter, sortBy, sortOrder, fetchUsers]);
+    }, [pagination.totalPages]);
 
     const getPageNumbers = () => {
         const pages = [];
@@ -215,11 +225,10 @@ const AdminManageUsersPage: React.FC = () => {
                 {error && (
                     <div className="mb-6 rounded-md border border-error-200 bg-error-50 p-4 text-error-700">
                         <div className="flex items-center justify-between">
-                            <span>{error}</span>
                             <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={fetchUsersData}
+                                onClick={() => fetchUsers(createQuery())} // Changed to use createQuery
                             >
                                 Retry
                             </Button>
@@ -280,7 +289,7 @@ const AdminManageUsersPage: React.FC = () => {
                                             size="sm"
                                             variant="danger"
                                             onClick={() => handleDeleteUser(user.id, user.name)}
-                                            disabled={currentUser?.id === user.id || isDeleting}
+                                            disabled={user.role === "ADMIN" || isDeleting}
                                             loading={isDeleting}
                                         >
                                             <Trash2 className="w-4 h-4 mr-1" />

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   User,
@@ -66,7 +66,7 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 
 export const UserDashboard: React.FC = () => {
   const { user, updateProfile, isMutating, error, clearError } = useAuthStore()
-  const { fetchUserBookings, userBookings, pagination, isLoading } = useBookingStore()
+  const { fetchUserBookings, userBookings, pagination, isLoading , error:bookingError, clearError:clearBookingError } = useBookingStore()
   const [activeTab, setActiveTab] = useState<'profile' | 'bookings' | 'settings'>('profile');
   const [isEditing, setIsEditing] = useState(false);
 
@@ -74,22 +74,45 @@ export const UserDashboard: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordsMatch, setPasswordsMatch] = useState(false);
   const [confirmPasswordTouched, setConfirmPasswordTouched] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const navigate = useNavigate();
+
+  const createBookingQuery = useCallback(() => ({
+    page: currentPage,
+    limit: 10
+  }), [currentPage]);
+
+  useEffect(() => {
+    if (activeTab === 'bookings') {
+      fetchUserBookings(createBookingQuery());
+    }
+  }, [fetchUserBookings, createBookingQuery, activeTab]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab]);
 
   useEffect(() => {
     clearError()
   }, [clearError])
 
-  useEffect(() => {
-    (async () => {
-      try {
-        await fetchUserBookings({})
-      } catch (error) {
+  useEffect(()=>{
+    clearBookingError()
+  },[clearBookingError])
 
-      }
-    })()
-  }, [fetchUserBookings])
+  useEffect(()=>{
+    if(bookingError){
+      message.error(bookingError)
+      clearBookingError()
+    }
+  },[bookingError])
+  useEffect(()=>{
+    if(error){
+      message.error(error)
+      clearError()
+    }
+  },[error])
 
   const { register, watch, handleSubmit, formState: { errors }, reset } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -104,12 +127,11 @@ export const UserDashboard: React.FC = () => {
   const onSubmit = async (data: ProfileFormData) => {
     const payload: Record<string, string> = {};
 
-    // Only add name if it's provided and different from current
     if (data.name && data.name.trim().length > 0 && data.name !== user?.name) {
       payload.name = data.name;
     }
 
-    // Only add password if it's provided
+    
     if (data.password && data.password.trim().length > 0) {
       if (data.password !== data.confirmPassword) {
         message.error("Passwords must match before submitting");
@@ -118,7 +140,7 @@ export const UserDashboard: React.FC = () => {
       payload.password = data.password;
     }
 
-    // Check if there are any changes to submit
+    
     if (Object.keys(payload).length === 0) {
       message.info("No changes made");
       return;
@@ -144,21 +166,21 @@ export const UserDashboard: React.FC = () => {
     }
   }, [password, confirmPassword]);
 
-  // Update the form validation logic - at least one field must be filled
+  
   const isFormValid = () => {
     const currentName = watch("name");
     const currentPassword = watch("password");
 
-    // At least one field must have content
+    
     const hasNameChange = currentName && currentName.trim().length > 0 && currentName !== user?.name;
     const hasPasswordChange = currentPassword && currentPassword.trim().length > 0;
 
-    // Must have at least one change
+    
     if (!hasNameChange && !hasPasswordChange) {
       return false;
     }
 
-    // If password is provided, it must match confirmPassword
+    
     if (hasPasswordChange) {
       return passwordsMatch;
     }
@@ -166,19 +188,16 @@ export const UserDashboard: React.FC = () => {
     return true;
   };
 
-  const { currentPage, totalPages, totalItems } = pagination.userBookings
-  const handlePageChange = (newPage: number) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      fetchUserBookings({ page: newPage });
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }
+  const handlePageChange = useCallback((newPage: number) => {
+    setCurrentPage(newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   const getPageNumbers = () => {
     const pages = [];
     const maxVisible = 5;
     let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-    let end = Math.min(totalPages, start + maxVisible - 1);
+    let end = Math.min(pagination.userBookings.totalPages, start + maxVisible - 1);
 
     if (end - start + 1 < maxVisible) {
       start = Math.max(1, end - maxVisible + 1);
@@ -190,24 +209,16 @@ export const UserDashboard: React.FC = () => {
     return pages;
   };
 
-  // const handleLogout = async () => {
-  //   await logout();
-  //   if (!useAuthStore.getState().error) {
-  //     message.success("Logout Successful!");
-  //     navigate('/');
-  //   }
-  // };
+
 
   return (
     <Container>
       <div className="py-8">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-neutral-900 mb-2">Dashboard</h1>
           <p className="text-neutral-600">Manage your profile and bookings</p>
         </div>
 
-        {/* Navigation Tabs */}
         <div className="border-b border-neutral-200 mb-8">
           <nav className="flex space-x-8">
             {[
@@ -215,7 +226,7 @@ export const UserDashboard: React.FC = () => {
               ...(user?.role !== "ADMIN"
                 ? [{ id: "bookings", label: "My Bookings", icon: Calendar }]
                 : []),
-              // { id: 'settings', label: 'Settings', icon: Settings }
+              
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -232,9 +243,7 @@ export const UserDashboard: React.FC = () => {
           </nav>
         </div>
 
-        {/* Tab Content */}
         <div className="space-y-8">
-          {/* Profile Tab */}
           {activeTab === 'profile' && (
             <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
               <div className="flex justify-between items-start mb-6">
@@ -252,7 +261,7 @@ export const UserDashboard: React.FC = () => {
                 </Button>
               </div>
 
-              {/* Display Mode */}
+              
               {!isEditing ? (
                 <div className="space-y-4">
                   <div>
@@ -269,16 +278,11 @@ export const UserDashboard: React.FC = () => {
                   </div>
                 </div>
               ) : (
-                /* Edit Mode */
+                
                 <div className="max-w-md">
-                  {error && (
-                    <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                      <p className="text-sm text-red-600">{error}</p>
-                    </div>
-                  )}
-
+                 
                   <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                    {/* Name field - make it truly optional */}
+
                     <Input
                       label="Full Name (leave blank to keep current)"
                       {...register("name")}
@@ -518,17 +522,13 @@ export const UserDashboard: React.FC = () => {
                     ))}
                   </div>
 
-                  {/* Pagination */}
-                  {totalPages > 1 && (
+                  {pagination.userBookings.totalPages > 1 && (
                     <div className="flex items-center justify-between border-t border-neutral-200 pt-6 mt-6">
-                      {/* Info */}
                       <div className="text-sm text-neutral-700">
-                        Page {currentPage} of {totalPages} • {totalItems} total bookings
+                        Page {currentPage} of {pagination.userBookings.totalPages} • {pagination.userBookings.totalItems} total bookings
                       </div>
 
-                      {/* Buttons */}
                       <div className="flex items-center space-x-2">
-                        {/* Prev */}
                         <Button
                           variant="outline"
                           size="sm"
@@ -539,7 +539,6 @@ export const UserDashboard: React.FC = () => {
                           Previous
                         </Button>
 
-                        {/* Page Numbers */}
                         <div className="hidden sm:flex space-x-1">
                           {getPageNumbers().map((pageNum) => (
                             <Button
@@ -555,17 +554,15 @@ export const UserDashboard: React.FC = () => {
                           ))}
                         </div>
 
-                        {/* Mobile Info */}
                         <div className="sm:hidden text-sm text-neutral-600">
-                          {currentPage} / {totalPages}
+                          {currentPage} / {pagination.userBookings.totalPages}
                         </div>
 
-                        {/* Next */}
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handlePageChange(currentPage + 1)}
-                          disabled={currentPage === totalPages || isLoading}
+                          disabled={currentPage === pagination.userBookings.totalPages || isLoading}
                         >
                           Next
                           <ChevronRight className="w-4 h-4 ml-1" />

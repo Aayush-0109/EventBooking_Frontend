@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Search, Filter, MapPin, Calendar, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { message } from 'antd';
@@ -19,62 +19,54 @@ const EventsPage: React.FC = () => {
 
     const [showFilters, setShowFilters] = useState(false);
     const [tempFilters, setTempFilters] = useState<EventQuery>({});
+    const [currentPage, setCurrentPage] = useState(1);
     const navigate = useNavigate();
 
+    const createQuery = useCallback((): EventQuery => ({
+        ...tempFilters,
+        page: currentPage,
+        limit: tempFilters.limit || 10
+    }), [tempFilters, currentPage]);
+
+    useEffect(() => {
+        fetchEvents(createQuery());
+    }, [fetchEvents, createQuery]);
 
     useEffect(() => {
         clearError()
     }, [clearError])
-
-    useEffect(() => {
-        setTempFilters(selectedFilters)
-    }, [selectedFilters])
-    useEffect(() => {
-        fetchEvents({ ...selectedFilters, page: 1 });
-    }, []);
+    useEffect(()=>{
+        if(error){
+            message.error(error)
+            clearError()
+        }
+    },[error])
 
     useEffect(() => {
         const timeout = setTimeout(() => {
             if (JSON.stringify(tempFilters) !== JSON.stringify(selectedFilters)) {
-                handleSearch();
+                setCurrentPage(1); // Auto-reset page when filters change
             }
         }, 500)
 
         return () => clearTimeout(timeout);
     }, [tempFilters]);
 
-
-    const handleSearch = () => {
-        const query: EventQuery = {
-            ...tempFilters,
-            page: 1,
-        };
-        fetchEvents(query);
-    };
-
-    const handlePageChange = (newPage: number) => {
-        console.log(newPage);
-
-        const query: EventQuery = {
-            ...selectedFilters,
-            page: newPage,
-        };
-        console.log(query);
-
-        fetchEvents(query);
+    const handlePageChange = useCallback((newPage: number) => {
+        setCurrentPage(newPage);
+        console.log(currentPage);
         window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    }, []);
 
-
-    const handleClearFilters = () => {
+    const handleClearFilters = useCallback(() => {
         setTempFilters({});
-        fetchEvents({ page: 1 });
+        setCurrentPage(1);
+
+
         setShowFilters(false);
-    }
+    }, []);
 
-
-    const handleBookEvent = async (eventId: number) => {
-
+    const handleBookEvent = useCallback(async (eventId: number) => {
         if (!isAuthenticated) {
             message.warning('Please login to book events');
             navigate('/login');
@@ -84,18 +76,19 @@ const EventsPage: React.FC = () => {
             await bookEvent(eventId);
             message.success("Event booked successfully!")
         } catch (error) {
-
+           
         }
-    }
-    const updateTempFilter = (key: keyof EventQuery, value: string | undefined) => {
+    }, [isAuthenticated, navigate, bookEvent]);
+
+    const updateTempFilter = useCallback((key: keyof EventQuery, value: string | undefined) => {
         setTempFilters(prev => ({
             ...prev,
             [key]: value || undefined
         }));
-    };
+    }, []);
 
     const canCreateEvent: boolean = (isAuthenticated && (user?.role === 'ADMIN' || user?.role === 'ORGANIZER'));
-    const { currentPage, totalPages, totalItems } = pagination.allEvents;
+    const { totalPages, totalItems } = pagination.allEvents;
     const hasActiveFilters = Object.values(selectedFilters).some(Boolean);
     const getPageNumbers = () => {
         const pages = [];
@@ -111,8 +104,11 @@ const EventsPage: React.FC = () => {
             pages.push(i);
         }
 
+
         return pages;
     };
+
+
 
     return (
         <Container>
@@ -133,14 +129,24 @@ const EventsPage: React.FC = () => {
                         )}
                     </div>
 
-                    {canCreateEvent && (
+                    <div className="flex gap-3">
                         <Button
-                            variant="primary"
-                            onClick={() => navigate('/create-event', { state: { from: location.pathname } })}
+                            variant="outline"
+                            onClick={() => navigate('/nearby-events')}
                         >
-                            Create Event
+                            <MapPin className="w-4 h-4 mr-2" />
+                            Nearby Events
                         </Button>
-                    )}
+
+                        {canCreateEvent && (
+                            <Button
+                                variant="primary"
+                                onClick={() => navigate('/create-event', { state: { from: location.pathname } })}
+                            >
+                                Create Event
+                            </Button>
+                        )}
+                    </div>
                 </div>
 
                 {/* Search and Filter Section */}
@@ -255,22 +261,7 @@ const EventsPage: React.FC = () => {
                     </div>
                 )}
 
-                {/* Error Display */}
-                {error && (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                        <div className="flex items-center justify-between">
-                            <p className="text-red-700">{error}</p>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={clearError}
-                            >
-                                Dismiss
-                                <X className="w-4 h-4 ml-2" />
-                            </Button>
-                        </div>
-                    </div>
-                )}
+               
 
                 {/* Events Content */}
                 <div className="space-y-6">
@@ -316,17 +307,13 @@ const EventsPage: React.FC = () => {
                                 ))}
                             </div>
 
-                            {/* Pagination Controls - Simplified */}
                             {totalPages > 1 && (
                                 <div className="flex items-center justify-between border-t border-neutral-200 pt-6">
-                                    {/* Results Info - Simplified */}
                                     <div className="text-sm text-neutral-700">
                                         Page {currentPage} of {totalPages} • {totalItems} total events
                                     </div>
 
-                                    {/* Pagination Buttons */}
                                     <div className="flex items-center space-x-2">
-                                        {/* Previous Button */}
                                         <Button
                                             variant="outline"
                                             size="sm"
@@ -337,7 +324,6 @@ const EventsPage: React.FC = () => {
                                             Previous
                                         </Button>
 
-                                        {/* Page Numbers */}
                                         <div className="hidden sm:flex space-x-1">
                                             {getPageNumbers().map((pageNum) => (
                                                 <Button

@@ -72,6 +72,13 @@ export const RegisterPage: React.FC = () => {
         clearError()
     }, [clearError])
 
+    useEffect(()=>{
+        if(error){
+            message.error(error)
+            clearError()
+        }
+    },[error])
+
     useEffect(() => {
         if (isAuthenticated && user) {
 
@@ -115,7 +122,7 @@ export const RegisterPage: React.FC = () => {
 
         setSelectedImage(file);
 
-        // Create preview URL
+        
         const reader = new FileReader();
         reader.onload = (e) => {
             setImagePreview(e.target?.result as string);
@@ -165,12 +172,7 @@ export const RegisterPage: React.FC = () => {
                         </p>
                     </div>
 
-                    {error && (
-                        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                            <p className="text-sm text-red-600">{error}</p>
-                        </div>
-                    )}
-
+                  
 
                     <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-8">
                         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">

@@ -46,19 +46,16 @@ const Header: React.FC = () => {
             return baseItems;
         }
 
-        // Authenticated user items
+        
         const authenticatedItems = [
             ...baseItems,
             { label: 'Dashboard', href: '/dashboard' },
         ];
 
-        // Add role-specific items
-        // if (user?.role === 'ORGANIZER' || user?.role === 'ADMIN') {
-        //     authenticatedItems.push({ label: 'Create Event', href: '/create-event' });
-        // }
+
 
         if (user?.role === 'ADMIN') {
-            authenticatedItems.push();
+            authenticatedItems.push({ label: 'Create Event', href: '/create-event' });
         }
 
         return authenticatedItems;
@@ -66,13 +63,9 @@ const Header: React.FC = () => {
 
     const navItems = getRoleBasedNavItems();
 
-    // Profile dropdown items
+
     const profileItems = [
-        // {
-        //     label: 'Profile Settings',
-        //     href: '/dashboard',
-        //     icon: Settings
-        // },
+        
         ...(user?.role === 'USER' ? [{
             label: 'Become Organizer',
             href: '/organizer-request',

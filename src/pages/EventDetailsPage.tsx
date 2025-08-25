@@ -19,10 +19,16 @@ export const EventDetailsPage: React.FC = () => {
     const { currentEvent, clearError, fetchEventById, error, isMutating, isLoading, bookEvent } = useEventStore();
     const { isAuthenticated, user } = useAuthStore()
 
-    // In real app, fetch event by ID from API
+    
     useEffect(() => {
         clearError()
     }, [clearError]);
+    useEffect(()=>{
+        if(error){
+            message.error(error)
+            clearError()
+        }
+    },[error])
 
     useEffect(() => {
         (async () => { await fetchEventById(eventId) })()
@@ -68,22 +74,7 @@ export const EventDetailsPage: React.FC = () => {
         )
     }
     else if (error) {
-        return (
-            <Container>
-                <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-                    <div className="flex items-center justify-between">
-                        <p className="text-red-700">{error}</p>
-                        <button
-                            onClick={() => navigate('/events')}
-                            className="flex items-center text-neutral-600 hover:text-neutral-900 mb-6 transition-colors"
-                        >
-                            <ArrowLeft className="w-4 h-4 mr-2" />
-                            Back to Events
-                        </button>
-                    </div>
-                </div>
-            </Container>
-        );
+        return <></>
     }
 
     else if (!currentEvent) {
@@ -101,7 +92,7 @@ export const EventDetailsPage: React.FC = () => {
     return (
         <Container>
             <div className="py-8">
-                {/* Back Button */}
+                
                 <button
                     onClick={() => navigate(location.state.from)}
                     className="flex items-center text-neutral-600 hover:text-neutral-900 mb-6 transition-colors"

@@ -29,6 +29,14 @@ export const OrganizerRequestForm: React.FC<OrganizerRequestFormProps> = ({ onSu
 useEffect(()=>{
     clearError()
 },[clearError])
+
+useEffect(()=>{
+    if(error){
+        message.error(error)
+        clearError()
+    }
+},[error])
+
     const {
         register,
         handleSubmit,
@@ -87,11 +95,6 @@ useEffect(()=>{
             </div>
 
             <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
-            {error && (
-                            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
-                                <p className="text-sm font-medium">{error}</p>
-                            </div>
-                        )}
                 {/* Overview Section */}
                 <div>
                     <label className="block text-sm font-medium text-neutral-700 mb-2">

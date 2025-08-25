@@ -28,6 +28,13 @@ const BookingDetailsPage: React.FC = () => {
     }, [clearError])
 
     useEffect(() => {
+        if (error) {
+            message.error(error);
+            clearError()
+        }
+    }, [error]);
+
+    useEffect(() => {
         (async () => {
             try {
                 await fetchBookingById(bookingId)
@@ -98,15 +105,8 @@ const BookingDetailsPage: React.FC = () => {
                     Back to Dashboard
                 </Button>
 
-                {/* Error Display - Consistent with project styling */}
-                {error && (
-                    <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                        <p className="text-sm text-red-600">{error}</p>
-                    </div>
-                )}
 
                 <div className="max-w-4xl mx-auto">
-                    {/* Header */}
                     <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 mb-6">
                         <div className="flex items-start justify-between">
                             <div>
@@ -123,11 +123,9 @@ const BookingDetailsPage: React.FC = () => {
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {/* Event Details */}
                         <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
                             <h2 className="text-xl font-semibold text-neutral-900 mb-4">Event Information</h2>
 
-                            {/* Event Image */}
                             <div className="h-48 bg-gradient-to-br from-primary-200 to-primary-300 flex items-center justify-center">
                                 {currentBooking.event.images && !Array.isArray(currentBooking.event.images) ? (
                                     <img
@@ -187,9 +185,7 @@ const BookingDetailsPage: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Booking Details */}
                         <div className="space-y-6">
-                            {/* Registration Info */}
                             <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
                                 <h2 className="text-xl font-semibold text-neutral-900 mb-4">Registration Information</h2>
 

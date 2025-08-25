@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
     Calendar,
     Users,
@@ -43,15 +43,27 @@ export const OrganizerDashboard: React.FC = () => {
         thisMonth: 0,
         updatedAt: ''  // Add this field
     })
+    const [currentPage, setCurrentPage] = useState(1);
+
+    const createQuery = useCallback(() => ({
+        page: currentPage,
+        limit: 10,
+    }), [currentPage]);
+
+    useEffect(() => {
+        fetchMyEvents(createQuery());
+    }, [fetchMyEvents, createQuery]);
+
     useEffect(() => {
         clearError()
     }, [clearError])
 
-    useEffect(() => {
-        (() => {
-            fetchMyEvents({})
-        })()
-    }, [fetchMyEvents])
+    useEffect(()=>{
+        if(error){
+            message.error(error)
+            clearError()
+        }
+    },[error])
 
     useEffect(() => {
         if (!isConnected) return
@@ -78,19 +90,16 @@ export const OrganizerDashboard: React.FC = () => {
 
         }
     }
-    const { currentPage, totalPages, totalItems } = pagination.myEvents
-    const handlePageChange = (newPage: number) => {
-        if (newPage >= 1 && newPage <= totalPages) {
-            fetchMyEvents({ page: newPage });
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-    }
+    const handlePageChange = useCallback((newPage: number) => {
+        setCurrentPage(newPage);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, []);
 
     const getPageNumbers = () => {
         const pages = [];
         const maxVisible = 5;
         let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-        let end = Math.min(totalPages, start + maxVisible - 1);
+        let end = Math.min(pagination.myEvents.totalPages, start + maxVisible - 1);
 
         if (end - start + 1 < maxVisible) {
             start = Math.max(1, end - maxVisible + 1);
@@ -106,13 +115,11 @@ export const OrganizerDashboard: React.FC = () => {
     return (
         <Container>
             <div className="py-8">
-                {/* Header */}
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold text-neutral-900 mb-2">Events Dashboard</h1>
                     <p className="text-neutral-600">Manage your events and track performance</p>
                 </div>
 
-                {/* Last Updated Info - Add this */}
                 {stats.updatedAt && (
                     <div className="mb-6 text-sm text-gray-500 flex items-center space-x-2">
                         <span>🕒</span>
@@ -120,7 +127,6 @@ export const OrganizerDashboard: React.FC = () => {
                     </div>
                 )}
 
-                {/* Navigation Tabs */}
                 <div className="border-b border-neutral-200 mb-8">
                     <nav className="flex space-x-8">
                         {[
@@ -409,16 +415,13 @@ export const OrganizerDashboard: React.FC = () => {
                                         ))}
                                     </div>
                                 )}
-                                {totalPages > 1 && (
+                                {pagination.myEvents.totalPages > 1 && (
                                     <div className="flex items-center justify-between border-t border-neutral-200 pt-6 mt-6">
-                                        {/* Info */}
                                         <div className="text-sm text-neutral-700">
-                                            Page {currentPage} of {totalPages} • {totalItems} total bookings
+                                            Page {currentPage} of {pagination.myEvents.totalPages} • {pagination.myEvents.totalItems} total bookings
                                         </div>
 
-                                        {/* Buttons */}
                                         <div className="flex items-center space-x-2">
-                                            {/* Prev */}
                                             <Button
                                                 variant="outline"
                                                 size="sm"
@@ -429,7 +432,6 @@ export const OrganizerDashboard: React.FC = () => {
                                                 Previous
                                             </Button>
 
-                                            {/* Page Numbers */}
                                             <div className="hidden sm:flex space-x-1">
                                                 {getPageNumbers().map((pageNum) => (
                                                     <Button
@@ -445,17 +447,15 @@ export const OrganizerDashboard: React.FC = () => {
                                                 ))}
                                             </div>
 
-                                            {/* Mobile Info */}
                                             <div className="sm:hidden text-sm text-neutral-600">
-                                                {currentPage} / {totalPages}
+                                                {currentPage} / {pagination.myEvents.totalPages}
                                             </div>
 
-                                            {/* Next */}
                                             <Button
                                                 variant="outline"
                                                 size="sm"
                                                 onClick={() => handlePageChange(currentPage + 1)}
-                                                disabled={currentPage === totalPages || isLoading}
+                                                disabled={currentPage === pagination.myEvents.totalPages || isLoading}
                                             >
                                                 Next
                                                 <ChevronRight className="w-4 h-4 ml-1" />

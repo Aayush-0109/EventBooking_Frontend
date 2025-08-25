@@ -10,13 +10,13 @@ const UnauthorizedPage: React.FC = () => {
     const { user, isAuthenticated } = useAuthStore();
 
     const handleGoBack = () => {
-        navigate(-1); // Go back to previous page
+        navigate(-1); 
     };
 
     const getRedirectPath = () => {
         if (!isAuthenticated) return '/login';
 
-        // Redirect based on user role
+        
         switch (user?.role) {
             case 'ADMIN':
                 return '/admin';

@@ -13,6 +13,7 @@ import LoadingSpinner from '../components/ui/LoadingSpinner';
 import websocketService from '../services/Websocket.service';
 import { useSocketStore } from '../store/socketStore';
 import useOrganizerRequestStore from '../store/organizerRequestStore';
+import { message } from 'antd';
 
 
 
@@ -22,7 +23,7 @@ const AdminDashboardPage: React.FC = () => {
     const [onlineUsers, setOnlineUsers] = useState(0);
     const { isConnected } = useSocketStore();
 
-    const { allRequests, fetchAllRequests, isLoading: requestsLoading } = useOrganizerRequestStore();
+    const { allRequests, fetchAllRequests, isLoading: requestsLoading ,error:requestsError,clearError} = useOrganizerRequestStore();
 
     const [stats, setStats] = useState({
         totalUsers: 0,
@@ -30,11 +31,17 @@ const AdminDashboardPage: React.FC = () => {
         activeEvents: 0,
         totalRegistrations: 0,
         pendingRequests: 0,
-        updatedAt: ''  // Add this field
+        updatedAt: '' 
     });
 
     useEffect(() => {
-        // Fetch requests to get pending ones for dashboard display
+        if (requestsError) {
+            message.error(requestsError);
+            clearError()
+        }
+    }, [requestsError]);
+
+    useEffect(() => {
         fetchAllRequests({ page: 1, limit: 10, sortOrder: 'desc' });
     }, [fetchAllRequests]);
 
@@ -49,6 +56,11 @@ const AdminDashboardPage: React.FC = () => {
             console.log('Received online update:', data);
             setOnlineUsers(data.onlineUsers);
         });
+
+        websocketService.on('error', (error) => {
+            console.error('WebSocket error:', error);
+        });
+
         websocketService.emit('request_admin_stats');
 
         // Cleanup on unmount
@@ -63,7 +75,6 @@ const AdminDashboardPage: React.FC = () => {
     return (
         <Container>
             <div className="py-8">
-                {/* Header */}
                 <div className="mb-8">
                     <div className="flex justify-between items-start">
                         <div>
@@ -79,14 +90,12 @@ const AdminDashboardPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Connection Status */}
                 <div className="mb-4 text-gray-600">
                     Online Users: {onlineUsers}
                 </div>
 
 
 
-                {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                     <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
                         <div className="flex items-center justify-between">
@@ -141,7 +150,6 @@ const AdminDashboardPage: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Recent Activity */}
                     <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-xl font-semibold text-neutral-900">Recent Activity</h2>
@@ -241,7 +249,6 @@ const AdminDashboardPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Quick Actions */}
                 <div className="mt-8 bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
                     <h2 className="text-xl font-semibold text-neutral-900 mb-6">Quick Actions</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

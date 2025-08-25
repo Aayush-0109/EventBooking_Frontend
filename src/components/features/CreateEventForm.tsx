@@ -5,9 +5,13 @@ import { z } from 'zod';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import LoadingSpinner from '../ui/LoadingSpinner';
-import { Calendar, MapPin, Upload, X } from 'lucide-react';
+import { Calendar, MapPin, Upload, X, Globe } from 'lucide-react';
 import useEventStore from '../../store/eventStore';
 import { isDevelopment } from '../../config/environment';
+import { LocationMap } from './LocationMap';
+import { AddressData } from '../../services/geocodingService';
+import { geocodingService } from '../../services/geocodingService';
+import { message } from 'antd';
 // Form validation schema (for React Hook Form)
 const createEventFormSchema = z.object({
   title: z.string()
@@ -37,9 +41,6 @@ const createEventFormSchema = z.object({
 
 
 
-
-
-
 // Validated data type (after schema validation)
 type CreateEventFormData = z.infer<typeof createEventFormSchema>;  // ✅ Use same schema
 type CompleteSubmissionData = CreateEventFormData & { images: File[] };
@@ -49,14 +50,19 @@ interface CreateEventFormProps {
 }
 
 export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCancel }) => {
+  const [showMap, setShowMap] = useState<boolean>(false)
   const { isMutating, error, clearError } = useEventStore()
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
+
   const {
     register,
     handleSubmit,
     formState: { errors },
     setValue,
+    trigger,
+    clearErrors, // Add this line
+    watch
   } = useForm<CreateEventFormData>({
     resolver: zodResolver(createEventFormSchema),
     defaultValues: {
@@ -75,6 +81,12 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCa
   useEffect(() => {
     clearError()
   }, [clearError])
+  useEffect(() => {
+    if (error) {
+      message.error(error);
+      clearError()
+    }
+  }, [error])
 
   useEffect(() => {
     return () => {
@@ -82,15 +94,15 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCa
     };
   }, [imageUrls]);
 
+
+
   const handleFormSubmit = async (data: CreateEventFormData) => {
     try {
-
       const completeData: CompleteSubmissionData = {
         ...data,
         images: selectedImages
       }
-      console.log(completeData);
-      
+
       await onSubmit(completeData);
     } catch (error) {
       if (isDevelopment())
@@ -115,19 +127,67 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCa
     });
   };
 
-  const handleLocationSelect = () => {
+  const handleMapLocationSelect = (coords: { lat: number; lng: number }) => {
+    console.log('Map coordinates selected:', coords);
 
+    
+    setValue('latitude', coords.lat);
+    setValue('longitude', coords.lng);
 
+    trigger(['latitude', 'longitude']);
+  }
+
+  const handleAddressSelect = (addressData: AddressData) => {
+    console.log('Address received from map:', addressData);
+
+    
+    setValue('address', addressData.address);
+    setValue('city', addressData.city);
+    setValue('state', addressData.state);
+    setValue('country', addressData.country);
+    setValue('postalCode', addressData.postalCode);
+
+    
+    clearErrors(['address', 'city', 'state', 'country', 'postalCode']);
+
+   
+
+    
+  };
+
+  const handleLocationSelect = async () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setValue('latitude', position.coords.latitude);
-          setValue('longitude', position.coords.longitude);
+        async (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+
+          
+          setValue('latitude', lat);
+          setValue('longitude', lng);
+
+          
+          try {
+            const addressData = await geocodingService.reverseGeocode(lat, lng);
+            if (addressData) {
+              
+              setValue('address', addressData.address);
+              setValue('city', addressData.city);
+              setValue('state', addressData.state);
+              setValue('country', addressData.country);
+              setValue('postalCode', addressData.postalCode);
+
+
+
+            }
+          } catch (error) {
+            console.error('Failed to get address from current location:', error);
+          }
         },
         () => {
-          // Fallback to default coordinates
-          setValue('latitude', 40.7128);
-          setValue('longitude', -74.0060);
+          
+          setValue('latitude', 28.6139);
+          setValue('longitude', 77.2088);
         }
       );
     }
@@ -140,23 +200,10 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCa
         <p className="text-neutral-600">Fill in the details below to create your event</p>
       </div>
 
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-          <div className="flex items-center justify-between">
-            <p className="text-red-700">{error}</p>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearError}
-            >
-              Dismiss
-            </Button>
-          </div>
-        </div>
-      )}
+     
 
       <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
-        {/* Basic Information */}
+        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="md:col-span-2">
             <Input
@@ -196,18 +243,56 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCa
           </div>
         </div>
 
-        {/* Location Information */}
+        
         <div className="border-t pt-6">
+
           <h3 className="text-lg font-semibold text-neutral-900 mb-4 flex items-center">
             <MapPin className="w-5 h-5 mr-2" />
             Location Details
           </h3>
 
+          
+          <div className="mb-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowMap(!showMap)}
+              className="w-full"
+            >
+              <Globe className="w-4 h-4 mr-2" />
+              {showMap ? 'Hide Map' : 'Show Map & Select Location'}
+            </Button>
+          </div>
+          {showMap && (
+            <div className="mb-6 overflow-hidden">
+              <LocationMap
+                className="h-96 w-full"
+                onLocationSelect={handleMapLocationSelect}
+                coords={{
+                  lat: watch('latitude') || 28.6139,
+                  lng: watch('longitude') || 77.2088
+                }}
+                initialCoords={{
+                  lat: 28.6139,
+                  lng: 77.2088
+                }}
+                onAddressSelect={handleAddressSelect}
+              />
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <Input
                 label="Address"
-                {...register('address')}
+                {...register('address', {
+                  onChange: () => {
+                    // Clear error when user types
+                    if (errors.address) {
+                      clearErrors('address');
+                    }
+                  }
+                })}
+                value={watch('address')} // Add this line to ensure controlled input
                 error={errors.address?.message}
                 placeholder="Complete street address"
                 required
@@ -217,7 +302,13 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCa
             <div>
               <Input
                 label="City"
-                {...register('city')}
+                {...register('city', {
+                  onChange: () => {
+                    if (errors.city) {
+                      clearErrors('city');
+                    }
+                  }
+                })}
                 error={errors.city?.message}
                 placeholder="City name"
                 required
@@ -227,7 +318,13 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCa
             <div>
               <Input
                 label="State/Province"
-                {...register('state')}
+                {...register('state', {
+                  onChange: () => {
+                    if (errors.state) {
+                      clearErrors('state');
+                    }
+                  }
+                })}
                 error={errors.state?.message}
                 placeholder="State or province"
                 required
@@ -237,7 +334,13 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCa
             <div>
               <Input
                 label="Country"
-                {...register('country')}
+                {...register('country', {
+                  onChange: () => {
+                    if (errors.country) {
+                      clearErrors('country');
+                    }
+                  }
+                })}
                 error={errors.country?.message}
                 placeholder="Country name"
                 required
@@ -247,7 +350,13 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCa
             <div>
               <Input
                 label="Postal Code"
-                {...register('postalCode')}
+                {...register('postalCode', {
+                  onChange: () => {
+                    if (errors.postalCode) {
+                      clearErrors('postalCode');
+                    }
+                  }
+                })}
                 error={errors.postalCode?.message}
                 placeholder="Postal/ZIP code"
                 required
@@ -267,33 +376,20 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCa
             </div>
           </div>
 
-          {/* Coordinates Display */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
-                Latitude
-              </label>
-              <Input
-                type="number"
-                step="any"
-                {...register('latitude', { valueAsNumber: true })}
-                error={errors.latitude?.message}
-                placeholder="Latitude (e.g., 40.7128)"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
-                Longitude
-              </label>
-              <Input
-                type="number"
-                step="any"
-                {...register('longitude', { valueAsNumber: true })}
-                error={errors.longitude?.message}
-                placeholder="Longitude (e.g., -74.0060)"
-              />
-            </div>
+          
+          <div className="hidden">
+            <Input
+              type="number"
+              step="any"
+              {...register('latitude', { valueAsNumber: true })}
+              error={errors.latitude?.message}
+            />
+            <Input
+              type="number"
+              step="any"
+              {...register('longitude', { valueAsNumber: true })}
+              error={errors.longitude?.message}
+            />
           </div>
         </div>
 

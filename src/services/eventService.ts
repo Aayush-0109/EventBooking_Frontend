@@ -26,7 +26,12 @@ class EventService {
         return response.data;
     }
     static async getNearbyEvents(query: NearbyEventsQuery): Promise<ApiResponse<EventsResponse>> {
-        const response = await get<EventsResponse>("/events/search/nearby", { params: query });
+        const processedQuery = {
+            ...query,
+            longitude: query.longitude.toString(),
+            latitude: query.latitude.toString()
+        };
+        const response = await get<EventsResponse>("/events/search/nearby", { params: processedQuery });
         return response.data;
     }
     static async createEvent(eventData: CreateEventData): Promise<ApiResponse<Event>> {
@@ -66,12 +71,12 @@ class EventService {
         }
     }
     static async updateEvent(id: number, eventData: UpdateEventData): Promise<ApiResponse<Event>> {
-         const processedEventData = {
+        const processedEventData = {
             ...eventData,
-            ...(eventData.latitude && {latitude : eventData.latitude?.toString()}),
-            ...(eventData.longitude && {longitude : eventData.longitude?.toString()}),
-            ...(eventData.date && {date : new Date(eventData.date).toISOString})
-         }
+            ...(eventData.latitude && { latitude: eventData.latitude?.toString() }),
+            ...(eventData.longitude && { longitude: eventData.longitude?.toString() }),
+            ...(eventData.date && { date: new Date(eventData.date).toISOString })
+        }
         const response = await put<Event>(`/events/${id}`, processedEventData);
         return response.data;
     }

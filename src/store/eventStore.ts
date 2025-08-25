@@ -62,14 +62,14 @@ const useEventStore = create<EventStore>()(
                     set({
                         isLoading: true,
                         error: null,
-                        selectedFilters: query ? {...query} : {}
+                        selectedFilters: query ? { ...query } : {}
 
                     })
                     try {
 
                         const response = await EventService.getEvents(query);
                         if (response.success) {
-                            
+
                             set((state) => ({
                                 ...state,
                                 allEvents: response.data.events,

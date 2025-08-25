@@ -5,10 +5,13 @@ import { z } from 'zod';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import LoadingSpinner from '../ui/LoadingSpinner';
-import { Calendar, MapPin } from 'lucide-react';
+import { Calendar, MapPin, Globe } from 'lucide-react';
 import useEventStore from '../../store/eventStore';
 import { Event } from '../../services';
 import { isDevelopment } from '../../config/environment';
+import { LocationMap } from './LocationMap';
+import { geocodingService, AddressData } from '../../services/geocodingService';
+import { message } from 'antd';
 
 // Form validation schema for updates (all fields optional)
 const updateEventFormSchema = z.object({
@@ -45,7 +48,7 @@ const updateEventFormSchema = z.object({
   const hasAnyField = Object.values(data).some(value => value !== undefined && value !== '');
 
   // If updating location, all address fields must be provided together
-  const addressFields = [data.address, data.city, data.state, data.country, data.postalCode];
+  const addressFields = [data.address, data.address, data.city, data.state, data.country, data.postalCode];
   const hasAnyAddressField = addressFields.some(field => field !== undefined && field !== '');
   const hasAllAddressFields = addressFields.every(field => field !== undefined && field !== '');
 
@@ -73,12 +76,16 @@ interface UpdateEventFormProps {
 
 export const UpdateEventForm: React.FC<UpdateEventFormProps> = ({ event, onSubmit, onCancel }) => {
   const { isMutating, error, clearError } = useEventStore();
+  const [showMap, setShowMap] = useState(false);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     setValue,
+    trigger,
+    clearErrors,
+    watch,
   } = useForm<UpdateEventFormData>({
     resolver: zodResolver(updateEventFormSchema),
     defaultValues: {
@@ -99,6 +106,13 @@ export const UpdateEventForm: React.FC<UpdateEventFormProps> = ({ event, onSubmi
     clearError();
   }, [clearError]);
 
+  useEffect(()=>{
+    if(error){
+      message.error(error)
+      clearError()
+    }
+  },[error])
+
   const handleFormSubmit = async (data: UpdateEventFormData) => {
     try {
       await onSubmit(data);
@@ -109,17 +123,67 @@ export const UpdateEventForm: React.FC<UpdateEventFormProps> = ({ event, onSubmi
     }
   };
 
-  const handleLocationSelect = () => {
+  const handleMapLocationSelect = (coords: { lat: number; lng: number }) => {
+    console.log('Map coordinates selected:', coords);
+    
+
+    setValue('latitude', coords.lat);
+    setValue('longitude', coords.lng);
+    
+    
+    trigger(['latitude', 'longitude']);
+  };
+
+  const handleAddressSelect = (addressData: AddressData) => {
+    console.log('Address received from map:', addressData);
+    
+    
+    setValue('address', addressData.address);
+    setValue('city', addressData.city);
+    setValue('state', addressData.state);
+    setValue('country', addressData.country);
+    setValue('postalCode', addressData.postalCode);
+    
+    
+    clearErrors(['address', 'city', 'state', 'country', 'postalCode']);
+    
+    
+  };
+
+  const handleLocationSelect = async () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setValue('latitude', position.coords.latitude);
-          setValue('longitude', position.coords.longitude);
+        async (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          
+          
+          setValue('latitude', lat);
+          setValue('longitude', lng);
+          
+          
+          try {
+            const addressData = await geocodingService.reverseGeocode(lat, lng);
+            if (addressData) {
+              // Update all address fields
+              setValue('address', addressData.address);
+              setValue('city', addressData.city);
+              setValue('state', addressData.state);
+              setValue('country', addressData.country);
+              setValue('postalCode', addressData.postalCode);
+              
+              
+              
+              console.log('Address auto-filled from current location:', addressData);
+            }
+          } catch (error) {
+            console.error('Failed to get address from current location:', error);
+          }
         },
         () => {
-          // Fallback to default coordinates
-          setValue('latitude', 40.7128);
-          setValue('longitude', -74.0060);
+          
+          setValue('latitude', 28.6139);
+          setValue('longitude', 77.2088);
         }
       );
     }
@@ -132,23 +196,10 @@ export const UpdateEventForm: React.FC<UpdateEventFormProps> = ({ event, onSubmi
         <p className="text-neutral-600">Modify the fields you want to update. Leave fields unchanged to keep current values.</p>
       </div>
 
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-          <div className="flex items-center justify-between">
-            <p className="text-red-700">{error}</p>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearError}
-            >
-              Dismiss
-            </Button>
-          </div>
-        </div>
-      )}
+     
 
       <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
-        {/* Basic Information */}
+        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="md:col-span-2">
             <Input
@@ -186,18 +237,56 @@ export const UpdateEventForm: React.FC<UpdateEventFormProps> = ({ event, onSubmi
           </div>
         </div>
 
-        {/* Location Information */}
+            
         <div className="border-t pt-6">
           <h3 className="text-lg font-semibold text-neutral-900 mb-4 flex items-center">
             <MapPin className="w-5 h-5 mr-2" />
             Location Details
           </h3>
 
+          
+          <div className="mb-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowMap(!showMap)}
+              className="w-full"
+            >
+              <Globe className="w-4 h-4 mr-2" />
+              {showMap ? 'Hide Map' : 'Show Map & Update Location'}
+            </Button>
+          </div>
+
+          
+          {showMap && (
+            <div className="mb-6 overflow-hidden">
+              <LocationMap
+                className="h-72 w-full"
+                onLocationSelect={handleMapLocationSelect}
+                coords={{
+                  lat: watch('latitude') || event.latitude,
+                  lng: watch('longitude') || event.longitude
+                }}
+                initialCoords={{
+                  lat: event.latitude,
+                  lng: event.longitude
+                }}
+                onAddressSelect={handleAddressSelect}
+              />
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <Input
                 label="Address"
-                {...register('address')}
+                {...register('address', {
+                  onChange: () => {
+                    if (errors.address) {
+                      clearErrors('address');
+                    }
+                  }
+                })}
                 error={errors.address?.message}
                 placeholder="Complete street address"
               />
@@ -206,7 +295,13 @@ export const UpdateEventForm: React.FC<UpdateEventFormProps> = ({ event, onSubmi
             <div>
               <Input
                 label="City"
-                {...register('city')}
+                {...register('city', {
+                  onChange: () => {
+                    if (errors.city) {
+                      clearErrors('city');
+                    }
+                  }
+                })}
                 error={errors.city?.message}
                 placeholder="City name"
               />
@@ -215,7 +310,13 @@ export const UpdateEventForm: React.FC<UpdateEventFormProps> = ({ event, onSubmi
             <div>
               <Input
                 label="State/Province"
-                {...register('state')}
+                {...register('state', {
+                  onChange: () => {
+                    if (errors.state) {
+                      clearErrors('state');
+                    }
+                  }
+                })}
                 error={errors.state?.message}
                 placeholder="State or province"
               />
@@ -224,7 +325,13 @@ export const UpdateEventForm: React.FC<UpdateEventFormProps> = ({ event, onSubmi
             <div>
               <Input
                 label="Country"
-                {...register('country')}
+                {...register('country', {
+                  onChange: () => {
+                    if (errors.country) {
+                      clearErrors('country');
+                    }
+                  }
+                })}
                 error={errors.country?.message}
                 placeholder="Country name"
               />
@@ -233,7 +340,13 @@ export const UpdateEventForm: React.FC<UpdateEventFormProps> = ({ event, onSubmi
             <div>
               <Input
                 label="Postal Code"
-                {...register('postalCode')}
+                {...register('postalCode', {
+                  onChange: () => {
+                    if (errors.postalCode) {
+                      clearErrors('postalCode');
+                    }
+                  }
+                })}
                 error={errors.postalCode?.message}
                 placeholder="Postal/ZIP code"
               />
@@ -252,8 +365,8 @@ export const UpdateEventForm: React.FC<UpdateEventFormProps> = ({ event, onSubmi
             </div>
           </div>
 
-          {/* Coordinates Display */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          
+          <div className="hidden">
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-2">
                 Latitude
@@ -282,7 +395,7 @@ export const UpdateEventForm: React.FC<UpdateEventFormProps> = ({ event, onSubmi
           </div>
         </div>
 
-        {/* Form Actions */}
+
         <div className="flex justify-end space-x-3 pt-6 border-t">
           <Button
             type="button"

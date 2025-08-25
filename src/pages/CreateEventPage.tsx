@@ -10,6 +10,8 @@ export const CreateEventPage: React.FC = () => {
     const location = useLocation()
     const { createEvent } = useEventStore()
 
+   
+
     const handleSubmit = async (data: CreateEventData) => {
    
         try {

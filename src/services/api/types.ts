@@ -16,8 +16,8 @@ export interface User {
     email: string;
     role: 'USER' | 'ORGANIZER' | 'ADMIN';
     profileImage: string | null;
-    createdAt? : string;
-    updatedAt ? :string;
+    createdAt?: string;
+    updatedAt?: string;
 }
 export interface LoginCredentials {
     email: string;
@@ -37,7 +37,7 @@ export interface Event {
     id: number;
     title: string;
     description: string;
-    date: string;
+    date: string; // Backend returns Date, but we'll handle conversion
     address: string;
     city: string;
     state: string;
@@ -45,11 +45,11 @@ export interface Event {
     postalCode: string;
     longitude: number;
     latitude: number;
-    images: string | string[] | null;
+    images: string | string[] | null; // Backend returns string | null for nearby events
     createdBy: number;
     createdAt: string;
     updatedAt: string;
-    distance?: number
+    distance?: number; // Added by backend for nearby events
 
     user?: {                 // Creator information
         id: number;
@@ -111,7 +111,7 @@ export interface NearbyEventsQuery {
     latitude: number;
     longitude: number;
     radius?: number;
-    unit?: 'km' | 'miles';
+    unit?: 'km' | 'Mi';
     page?: number;
     limit?: number;
 }

@@ -1,17 +1,7 @@
 import React from 'react';
 import { cn } from '../../lib/utils';
 
-/**
- * Button component with multiple variants and sizes
- * 
- * Props:
- * - variant: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger'
- * - size: 'sm' | 'md' | 'lg'
- * - loading: boolean - Shows loading spinner
- * - disabled: boolean - Disables the button
- * - children: React.ReactNode - Button content
- * - ...props: All standard button props
- */
+
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
@@ -30,10 +20,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ...props 
   }, ref) => {
     
-    // Base classes that apply to all buttons
     const baseClasses = "inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
     
-    // Variant-specific classes
     const variantClasses = {
       primary: "bg-primary-500 hover:bg-primary-600 text-white focus:ring-primary-500 shadow-medium",
       secondary: "bg-accent-500 hover:bg-accent-600 text-white focus:ring-accent-500",
@@ -42,14 +30,13 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       danger: "bg-error hover:bg-error/90 text-white focus:ring-error"
     };
     
-    // Size-specific classes
     const sizeClasses = {
       sm: "px-3 py-1.5 text-sm",
       md: "px-4 py-2 text-base",
       lg: "px-6 py-3 text-lg"
     };
     
-    // Loading spinner component
+    
     const LoadingSpinner = () => (
       <svg 
         className="animate-spin -ml-1 mr-2 h-4 w-4" 
