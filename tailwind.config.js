@@ -1,4 +1,4 @@
-/** @type {import('tailwindcss').Config} */
+
 export default {
     content: [
         "./index.html",
@@ -7,33 +7,33 @@ export default {
     theme: {
         extend: {
             colors: {
-                // Primary brand colors - Warm Soft Palette
+                
                 primary: {
-                    50: '#fffdfd',   // Very light warm white
-                    100: '#fff2eb',  // rgb(255, 242, 235) - Soft cream
-                    200: '#ffe8cd',  // rgb(255, 232, 205) - Warm peach
-                    300: '#ffd6ba',  // rgb(255, 214, 186) - Soft coral
-                    400: '#ffdcdc',  // rgb(255, 220, 220) - Light pink
-                    500: '#ffc4a6',  // Slightly darker coral
-                    600: '#ffb08a',  // Medium coral
-                    700: '#ff9c6e',  // Rich coral
-                    800: '#ff8852',  // Deep coral
-                    900: '#ff7436',  // Vibrant coral
+                    50: '#fffdfd',   
+                    100: '#fff2eb',  
+                    200: '#ffe8cd',  
+                    300: '#ffd6ba',  
+                    400: '#ffdcdc',  
+                    500: '#ffc4a6',  
+                    600: '#ffb08a',  
+                    700: '#ff9c6e',  
+                    800: '#ff8852',  
+                    900: '#ff7436',  
                 },
-                // Accent colors - Complementary warm tones
+                
                 accent: {
                     50: '#fff9f5',
                     100: '#fff0e6',
                     200: '#ffe1cc',
                     300: '#ffd2b3',
                     400: '#ffc399',
-                    500: '#ffb480',  // Warm orange
+                    500: '#ffb480',  
                     600: '#ffa566',
                     700: '#ff964d',
                     800: '#ff8733',
                     900: '#ff781a',
                 },
-                // Neutral colors - Warm grays
+                
                 neutral: {
                     50: '#fefefe',
                     100: '#f5f5f5',
@@ -46,7 +46,7 @@ export default {
                     800: '#262626',
                     900: '#171717',
                 },
-                // Success, Warning, Error colors
+                
                 success: '#10b981',
                 warning: '#f59e0b',
                 error: '#ef4444',

@@ -22,7 +22,7 @@ const Header: React.FC = () => {
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-    // Handle logout with confirmation
+    
     const handleLogout = async () => {
         try {
             await logout();
@@ -92,15 +92,15 @@ const Header: React.FC = () => {
         <header className="w-full bg-white shadow-soft sticky top-0 z-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16">
-                    {/* Logo */}
+                    {}
                     <Link
                         to="/"
                         className="text-2xl font-heading font-bold text-primary-600 tracking-tight hover:text-primary-700 transition-colors"
                     >
-                        EventBooking
+                        EventSphere
                     </Link>
 
-                    {/* Desktop Navigation */}
+                    {}
                     <nav className="hidden md:flex items-center space-x-6">
                         {navItems.map((item) => (
                             <Link
@@ -112,7 +112,7 @@ const Header: React.FC = () => {
                             </Link>
                         ))}
 
-                        {/* User Profile or Auth Buttons */}
+                        {}
                         {isAuthenticated ? (
                             <div className="relative">
                                 <button
@@ -134,10 +134,10 @@ const Header: React.FC = () => {
                                     <ChevronDown className="w-4 h-4" />
                                 </button>
 
-                                {/* Profile Dropdown */}
+                                {}
                                 {isProfileOpen && (
                                     <div className="absolute right-0 mt-2 w-56 bg-white border border-neutral-200 rounded-lg shadow-lg py-2 z-50">
-                                        {/* User Info */}
+                                        {}
                                         <div className="px-4 py-2 border-b border-neutral-200">
                                             <p className="font-medium text-neutral-900">{user?.name}</p>
                                             <p className="text-sm text-neutral-600">{user?.email}</p>
@@ -151,7 +151,7 @@ const Header: React.FC = () => {
                                             </span>
                                         </div>
 
-                                        {/* Profile Menu Items */}
+                                        {}
                                         {profileItems.map((item) => (
                                             <Link
                                                 key={item.href}
@@ -164,7 +164,7 @@ const Header: React.FC = () => {
                                             </Link>
                                         ))}
 
-                                        {/* Logout */}
+                                        {}
                                         <button
                                             onClick={handleLogout}
                                             className="flex items-center space-x-2 w-full px-4 py-2 text-red-600 hover:bg-red-50 transition-colors"
@@ -264,7 +264,7 @@ const Header: React.FC = () => {
                                     </button>
                                 </div>
                             ) : (
-                                // 🆕 ADD THIS: Mobile Login/Register buttons for unauthenticated users
+                                
                                 <div className="border-t border-neutral-200 pt-4 mt-4 space-y-3">
                                     <Button
                                         onClick={() => {

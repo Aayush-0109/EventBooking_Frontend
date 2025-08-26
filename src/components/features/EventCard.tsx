@@ -19,7 +19,7 @@ const EventCard: React.FC<EventCardProps> = ({
     const location = useLocation()
     return (
         <div className="bg-white rounded-xl shadow-soft overflow-hidden hover:shadow-medium transition-shadow">
-            {/* Event Image */}
+            {}
             <div className="h-48 bg-gradient-to-br from-primary-200 to-primary-300 flex items-center justify-center">
                 {event.images && !Array.isArray(event.images) ? (
                     <img
@@ -32,7 +32,7 @@ const EventCard: React.FC<EventCardProps> = ({
                 )}
             </div>
 
-            {/* Event Details */}
+            {}
             <div className="p-6 space-y-4">
                 <div>
                     <h3 className="text-xl font-semibold text-neutral-800 mb-2 line-clamp-2">
@@ -43,7 +43,7 @@ const EventCard: React.FC<EventCardProps> = ({
                     </p>
                 </div>
 
-                {/* Event Info */}
+                {}
                 <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm text-neutral-500">
                         <Calendar className="w-4 h-4" />
@@ -59,7 +59,7 @@ const EventCard: React.FC<EventCardProps> = ({
                     </div>
                 </div>
 
-                {/* Action Buttons */}
+                {}
                 <div className="flex gap-2">
                     <Link
                         to={`/events/${event.id}`}

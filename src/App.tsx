@@ -49,23 +49,23 @@ function App() {
                   </ProtectedRoute>
                 } />
 
-                {/* 🎯 ROLE-BASED PROTECTED ROUTES */}
+                {}
 
-                {/* USER role only - Create organizer requests */}
+                {}
                 <Route path="/organizer-request" element={
                   <ProtectedRoute requiredRole="USER">
                     <OrganizerRequestPage />
                   </ProtectedRoute>
                 } />
 
-                {/* Any authenticated user can view their bookings */}
+                {}
                 <Route path="/booking/:id" element={
                   <ProtectedRoute >
                     <BookingDetailsPage />
                   </ProtectedRoute>
                 } />
 
-                {/* 👤 ORGANIZER + ADMIN ROUTES - Event Management */}
+                {}
                 <Route path="/organizer/dashboard" element={
                   <ProtectedRoute requiredRole={["ORGANIZER", "ADMIN"]}>
                     <OrganizerDashboard />
@@ -84,7 +84,7 @@ function App() {
                   </ProtectedRoute>
                 } />
 
-                {/* 👑 ADMIN ONLY ROUTES */}
+                {}
                 <Route path="/admin" element={
                   <ProtectedRoute requiredRole="ADMIN">
                     <AdminDashboardPage />
@@ -103,14 +103,14 @@ function App() {
                   </ProtectedRoute>
                 } />
 
-                {/* Admin manages organizer requests */}
+                {}
                 <Route path="/admin/organizer-requests" element={
                   <ProtectedRoute requiredRole="ADMIN">
                     <AdminOrganizerRequestsPage />
                   </ProtectedRoute>
                 } />
 
-                {/* 🚨 ERROR PAGES */}
+                {}
                 <Route path="/unauthorized" element={<UnauthorizedPage />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>

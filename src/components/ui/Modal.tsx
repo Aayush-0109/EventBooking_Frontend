@@ -17,7 +17,7 @@ const Modal: React.FC<ModalProps> = ({
     children,
     className
 }) => {
-    // Close modal on Escape key
+    
     useEffect(() => {
         const handleEscape = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
@@ -27,7 +27,7 @@ const Modal: React.FC<ModalProps> = ({
 
         if (isOpen) {
             document.addEventListener('keydown', handleEscape);
-            document.body.style.overflow = 'hidden'; // Prevent background scroll
+            document.body.style.overflow = 'hidden'; 
         }
 
         return () => {
@@ -45,12 +45,12 @@ const Modal: React.FC<ModalProps> = ({
                 onClick={onClose}
             />
 
-            {/* Modal Content */}
+            {}
             <div className={cn(
                 "relative bg-white rounded-2xl shadow-large max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto",
                 className
             )}>
-                {/* Header */}
+                {}
                 {title && (
                     <div className="flex items-center justify-between p-6 border-b border-neutral-200">
                         <h2 className="text-xl font-semibold text-neutral-800">
@@ -65,7 +65,7 @@ const Modal: React.FC<ModalProps> = ({
                     </div>
                 )}
 
-                {/* Content */}
+                {}
                 <div className="p-6">
                     {children}
                 </div>

@@ -1,4 +1,4 @@
-// frontend/src/store/socketStore.ts
+
 import { create } from 'zustand';
 
 type SocketState = {

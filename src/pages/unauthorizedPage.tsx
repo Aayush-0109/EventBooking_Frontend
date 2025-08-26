@@ -33,19 +33,19 @@ const UnauthorizedPage: React.FC = () => {
         <Container>
             <div className="min-h-[60vh] flex items-center justify-center">
                 <div className="text-center max-w-md mx-auto">
-                    {/* Icon */}
+                    {}
                     <div className="flex justify-center mb-6">
                         <div className="bg-red-100 p-4 rounded-full">
                             <Shield className="h-12 w-12 text-red-600" />
                         </div>
                     </div>
 
-                    {/* Title */}
+                    {}
                     <h1 className="text-3xl font-bold text-gray-900 mb-4">
                         Access Denied
                     </h1>
 
-                    {/* Message */}
+                    {}
                     <p className="text-gray-600 mb-2">
                         You don't have permission to access this page.
                     </p>

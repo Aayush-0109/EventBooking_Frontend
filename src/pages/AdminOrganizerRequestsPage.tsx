@@ -5,7 +5,6 @@ import {
     CheckCircle,
     XCircle,
     Clock,
-    Eye,
     User,
     Calendar,
     ChevronLeft,
@@ -55,7 +54,7 @@ const AdminReviewRequestsPage: React.FC = () => {
         const query = {
             page: currentPage,
             limit: 10,
-            // Backend only supports sortOrder, not status filter yet
+            
             sortOrder: 'desc' as 'asc' | 'desc'
         };
         fetchAllRequests(query);
@@ -65,7 +64,7 @@ const AdminReviewRequestsPage: React.FC = () => {
         try {
             await updateRequestStatus(requestId, { status: newStatus });
             message.success(`Request ${newStatus.toLowerCase()} successfully`);
-            fetchRequests(); // Refresh the list
+            fetchRequests(); 
         } catch (error) {
             message.error('Failed to update request status');
         }
@@ -94,7 +93,7 @@ const AdminReviewRequestsPage: React.FC = () => {
         return pages;
     };
 
-    // Filter requests by status (client-side for now since backend doesn't support it)
+    
     const filteredRequests = statusFilter === 'ALL'
         ? allRequests
         : allRequests.filter(request => request.status === statusFilter);

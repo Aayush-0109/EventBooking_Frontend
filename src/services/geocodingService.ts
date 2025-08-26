@@ -17,7 +17,7 @@ class GeocodingService {
     private userAgent = 'EventBookingApp/1.0';
     private cache = new Map<string, any>();
     private lastRequestTime = 0;
-    private readonly MIN_REQUEST_INTERVAL = 1000; // 1 second between requests
+    private readonly MIN_REQUEST_INTERVAL = 1000; 
 
     private async throttleRequest<T>(requestFn: () => Promise<T>): Promise<T> {
         const now = Date.now();
@@ -33,7 +33,7 @@ class GeocodingService {
         return requestFn();
     }
 
-    // Forward geocoding: Address → Coordinates
+    
     async forwardGeocode(query: string): Promise<GeocodingResult | null> {
         const cacheKey = `forward_${query}`;
         
@@ -80,7 +80,7 @@ class GeocodingService {
         }
     }
 
-    // Reverse geocoding: Coordinates → Address
+    
     async reverseGeocode(lat: number, lng: number): Promise<AddressData | null> {
         const cacheKey = `reverse_${lat.toFixed(6)}_${lng.toFixed(6)}`;
         
@@ -133,7 +133,7 @@ class GeocodingService {
         }
     }
 
-    // Clear cache when needed
+    
     clearCache(): void {
         this.cache.clear();
     }

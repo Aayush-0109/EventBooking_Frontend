@@ -1,4 +1,4 @@
-// frontend/src/pages/AdminManageUsersPage.tsx
+
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -126,7 +126,7 @@ const AdminManageUsersPage: React.FC = () => {
     };
 
     const handleDeleteUser = async (userId: number, userName: string) => {
-        // Prevent admin from deleting themselves
+        
         if (currentUser?.id === userId) {
             message.error('You cannot delete your own account');
             return;
@@ -159,7 +159,7 @@ const AdminManageUsersPage: React.FC = () => {
     return (
         <Container>
             <div className="py-8">
-                {/* Header */}
+                {}
                 <div className="mb-8">
                     <div className="flex items-center gap-4 mb-4">
                         <Button
@@ -175,7 +175,7 @@ const AdminManageUsersPage: React.FC = () => {
                     <p className="text-neutral-600">View and manage all platform users</p>
                 </div>
 
-                {/* Search and Filters */}
+                {}
                 <div className="mb-6 space-y-4">
                     <div className="flex flex-col sm:flex-row gap-4">
                         <div className="flex-1">
@@ -221,14 +221,14 @@ const AdminManageUsersPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Error Display */}
+                {}
                 {error && (
                     <div className="mb-6 rounded-md border border-error-200 bg-error-50 p-4 text-error-700">
                         <div className="flex items-center justify-between">
                             <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => fetchUsers(createQuery())} // Changed to use createQuery
+                                onClick={() => fetchUsers(createQuery())} 
                             >
                                 Retry
                             </Button>
@@ -236,7 +236,7 @@ const AdminManageUsersPage: React.FC = () => {
                     </div>
                 )}
 
-                {/* Users List */}
+                {}
                 <div className="space-y-4">
                     {users.map((user) => (
                         <div
@@ -302,7 +302,7 @@ const AdminManageUsersPage: React.FC = () => {
                     ))}
                 </div>
 
-                {/* Empty State */}
+                {}
                 {users.length === 0 && !isLoading && (
                     <div className="text-center py-12">
                         <Users className="w-12 h-12 text-neutral-400 mx-auto mb-4" />
@@ -318,14 +318,14 @@ const AdminManageUsersPage: React.FC = () => {
 
                 {pagination.totalPages > 1 && (
                     <div className="flex items-center justify-between border-t border-neutral-200 pt-6 mt-6">
-                        {/* Info */}
+                        {}
                         <div className="text-sm text-neutral-700">
                             Page {pagination.currentPage} of {pagination.totalPages} • {pagination.totalItems} total users
                         </div>
 
-                        {/* Buttons */}
+                        {}
                         <div className="flex items-center space-x-2">
-                            {/* Prev */}
+                            {}
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -336,7 +336,7 @@ const AdminManageUsersPage: React.FC = () => {
                                 Previous
                             </Button>
 
-                            {/* Page Numbers */}
+                            {}
                             <div className="hidden sm:flex space-x-1">
                                 {getPageNumbers().map((pageNum) => (
                                     <Button
@@ -352,12 +352,12 @@ const AdminManageUsersPage: React.FC = () => {
                                 ))}
                             </div>
 
-                            {/* Mobile Info */}
+                            {}
                             <div className="sm:hidden text-sm text-neutral-600">
                                 {pagination.currentPage} / {pagination.totalPages}
                             </div>
 
-                            {/* Next */}
+                            {}
                             <Button
                                 variant="outline"
                                 size="sm"

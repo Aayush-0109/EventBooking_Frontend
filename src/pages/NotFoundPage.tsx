@@ -9,29 +9,29 @@ const NotFoundPage: React.FC = () => {
         <Container>
             <div className="min-h-[60vh] flex items-center justify-center">
                 <div className="text-center max-w-md mx-auto">
-                    {/* 404 Number */}
+                    {}
                     <div className="mb-6">
                         <h1 className="text-9xl font-bold text-gray-200">404</h1>
                     </div>
 
-                    {/* Icon */}
+                    {}
                     <div className="flex justify-center mb-6">
                         <div className="bg-blue-100 p-4 rounded-full">
                             <Search className="h-12 w-12 text-blue-600" />
                         </div>
                     </div>
 
-                    {/* Title */}
+                    {}
                     <h2 className="text-3xl font-bold text-gray-900 mb-4">
                         Page Not Found
                     </h2>
 
-                    {/* Message */}
+                    {}
                     <p className="text-gray-600 mb-8">
                         The page you're looking for doesn't exist or has been moved.
                     </p>
 
-                    {/* Action Buttons */}
+                    {}
                     <div className="space-y-3">
                         <Link to="/">
                             <Button className="w-full">

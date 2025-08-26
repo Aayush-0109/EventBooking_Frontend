@@ -9,7 +9,7 @@ const HomePage: React.FC = () => {
 
     return (
         <div className="space-y-8">
-            {/* Hero Section */}
+            {}
             <div className="text-center space-y-6">
                 <h1 className="text-4xl md:text-6xl font-heading font-bold text-neutral-800">
                     Discover Amazing Events

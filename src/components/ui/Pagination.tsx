@@ -2,9 +2,9 @@ import React from 'react';
 import { cn } from '../../lib/utils';
 
 interface PaginationProps {
-    currentPage: number;    // Current page (1-based)
-    totalPages: number;     // Total number of pages
-    onPageChange: (page: number) => void; // Callback when page changes
+    currentPage: number;    
+    totalPages: number;     
+    onPageChange: (page: number) => void; 
     className?: string;
 }
 
@@ -15,7 +15,7 @@ const Pagination: React.FC<PaginationProps> = ({
     className,
 }) => {
 
-    // Helper to create an array of page numbers (e.g., [1, 2, 3, 4])
+    
     const getPageNumbers = () => {
         const pages = [];
         for (let i = 1; i <= totalPages; i++) {
@@ -24,7 +24,7 @@ const Pagination: React.FC<PaginationProps> = ({
         return pages;
     };
 
-    if (totalPages <= 1) return null; // No need to show pagination
+    if (totalPages <= 1) return null; 
 
     return (
         <nav className={cn("flex items-center justify-center gap-2 mt-8", className)}>

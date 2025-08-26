@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist, devtools } from 'zustand/middleware'
 import AuthService from '../services/authService'
-import { User, LoginCredentials, RegisterData, UpdateUserData, } from '../services/api/types'
+import { User, LoginCredentials, RegisterData, UpdateUserData, SendOtpData, VerifyOtpData } from '../services/api/types'
 import { classifyError } from '../utils/errorHandling';
 import { isDevelopment } from '../config/environment';
 
@@ -10,16 +10,20 @@ import { isDevelopment } from '../config/environment';
 
 
 interface AuthStore {
-    // 
+    
     user: User | null;
     isAuthenticated: boolean;
     isLoading: boolean;
     error: string | null;
     isAuthChecking: boolean;
     isMutating: boolean;
+    isOtpSending: boolean;
+    isOtpVerifying: boolean;
 
     login: (credentials: LoginCredentials) => Promise<void>;
     registerUser: (userData: RegisterData) => Promise<void>;
+    sendOtp: (userData: SendOtpData) => Promise<void>;
+    verifyOtp: (userData: VerifyOtpData) => Promise<void>;
     logout: () => Promise<void>;
     checkAuth: () => Promise<void>;
     refreshToken: () => Promise<boolean>;
@@ -40,7 +44,9 @@ export const useAuthStore = create<AuthStore>()(
                 isLoading: false,
                 isAuthChecking: false,
                 isMutating: false,
-                // login 
+                isOtpSending: false,
+                isOtpVerifying: false,
+                
 
                 login: async (credentials) => {
                     set({
@@ -113,7 +119,57 @@ export const useAuthStore = create<AuthStore>()(
                         throw error
                     }
                 },
-                logout: async () => {
+                sendOtp: async (userData) => {
+                    set({
+                        isOtpSending: true,
+                        error: null
+                    })
+                    
+                    try {
+                        const response = await AuthService.sendOtp(userData);
+                        if (response.success) {
+                            set({
+                                isOtpSending: false,
+                                error: null
+                            })
+                        }
+                        else throw new Error(response.message || "OTP sending failed")
+                    }
+                    catch (error) {
+                        const classifiedError = classifyError(error);
+                        set({
+                            isOtpSending: false,
+                            error: classifiedError.message
+                        })
+                        throw error
+                    }
+                },
+                verifyOtp: async (userData) => {
+                    set({
+                        isOtpVerifying: true,
+                        error: null
+                    })
+                    
+                    try {
+                        const response = await AuthService.verifyOtp(userData);
+                        if (response.success) {
+                            set({
+                                isOtpVerifying: false,
+                                error: null
+                            })
+                        }
+                        else throw new Error(response.message || "OTP verification failed")
+                    }
+                    catch (error) {
+                        const classifiedError = classifyError(error);
+                        set({
+                            isOtpVerifying: false,
+                            error: classifiedError.message
+                        })
+                        throw error
+                    }
+                },
+                    logout: async () => {
                     set({
                         isLoading: true,
                     })
@@ -273,6 +329,12 @@ export const useAuthStore = create<AuthStore>()(
                 },
                 setLoading: (Loading: boolean) => {
                     set({ isLoading: Loading })
+                },
+                setOtpSending: (isOtpSending: boolean) => {
+                    set({ isOtpSending })
+                },
+                setOtpVerifying: (isOtpVerifying: boolean) => {
+                    set({ isOtpVerifying })
                 }
             }
         ), { name: 'Auth-Store' })

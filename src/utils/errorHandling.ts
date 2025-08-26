@@ -82,7 +82,7 @@ export const classifyError = (error: any): ClassifiedError => {
                 }
             case 404:
                 return {
-                    type: errorType.NOT_FOUND_ERROR, // Add this to enum
+                    type: errorType.NOT_FOUND_ERROR, 
                     message: data.message.split(':')?.[1] || 'The requested resource was not found.',
                     technicalMessage: `Resource not found: ${JSON.stringify(data.message)}`,
                     retryable: false,
@@ -90,7 +90,7 @@ export const classifyError = (error: any): ClassifiedError => {
                     statusCode: 404
                 };
                 case 409: return {
-                    type: errorType.DUPLICATION_ERROR, // Add this to enum
+                    type: errorType.DUPLICATION_ERROR, 
                     message: data.message.split(':')[1] || 'User has already created a request.',
                     technicalMessage: `Duplicate request: ${JSON.stringify(data.message)}`,
                     retryable: false,

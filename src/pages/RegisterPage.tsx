@@ -3,19 +3,18 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Mail, Lock, Eye, EyeOff, CheckCircle, XCircle, Camera, Upload, X } from 'lucide-react';
+import { User, Mail, Lock, Eye, EyeOff, CheckCircle, XCircle, Camera, Upload, X, Shield, Clock } from 'lucide-react';
 import { message } from 'antd';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
+import Modal from '../components/ui/Modal';
 
 import Container from '../components/layout/Container';
 
-
 import { useAuthStore } from '../store/authStore';
 import { RegisterData } from '../services';
-
 
 const registerSchema = z.object({
     name: z.string().min(2).max(50).trim(),
@@ -32,8 +31,14 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 export const RegisterPage: React.FC = () => {
     const navigate = useNavigate()
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const { registerUser, error, clearError, isMutating, user, isAuthenticated } = useAuthStore()
+    const { registerUser, error, clearError, isMutating, user, isAuthenticated, sendOtp, verifyOtp, isOtpSending, isOtpVerifying } = useAuthStore()
 
+    
+    const [isEmailVerified, setIsEmailVerified] = useState(false);
+    const [showOtpModal, setShowOtpModal] = useState(false);
+    const [otp, setOtp] = useState('');
+    const [canResendOtp, setCanResendOtp] = useState(true);
+    const [resendCooldown, setResendCooldown] = useState(0);
 
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -61,6 +66,32 @@ export const RegisterPage: React.FC = () => {
     });
     const password = watch('password');
     const confirmPassword = watch('confirmPassword');
+    const email = watch('email');
+
+    
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (resendCooldown > 0) {
+            interval = setInterval(() => {
+                setResendCooldown(prev => {
+                    if (prev <= 1) {
+                        setCanResendOtp(true);
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [resendCooldown]);
+
+
+    useEffect(() => {
+        if (isEmailVerified) {
+            setIsEmailVerified(false);
+        }
+    }, [email]);
+
     useEffect(() => {
         if (confirmPassword && password) {
             setPasswordsMatch(password === confirmPassword)
@@ -72,20 +103,21 @@ export const RegisterPage: React.FC = () => {
         clearError()
     }, [clearError])
 
-    useEffect(()=>{
-        if(error){
+    useEffect(() => {
+        if (error) {
             message.error(error)
             clearError()
         }
-    },[error])
+    }, [error])
 
     useEffect(() => {
         if (isAuthenticated && user) {
-
             message.success(`Welcome to EventBooking, ${user.name}! 🎉`);
             navigate('/');
         }
     }, [isAuthenticated, user, navigate])
+
+
 
     useEffect(() => {
         return () => {
@@ -94,6 +126,65 @@ export const RegisterPage: React.FC = () => {
             }
         };
     }, [imagePreview]);
+
+    const isValidEmail = (email: string) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    };
+
+    
+    const handleSendOtp = async () => {
+        if (!email || !isValidEmail(email)) {
+            message.error('Please enter a valid email address');
+            return;
+        }
+
+        clearError();
+        try {
+            await sendOtp({ email });    
+            message.success('OTP sent to your email!');
+            setShowOtpModal(true);
+            setCanResendOtp(false);
+            setResendCooldown(120);        
+        } catch (error) {
+            
+        }
+    
+    };
+
+    
+    const handleVerifyOtp = async () => {
+        if (!otp || otp.length !== 6) {
+            return;
+        }
+        clearError();
+        try {
+            await verifyOtp({ email, otp: parseInt(otp) });
+            message.success('Email verified successfully!');
+            setIsEmailVerified(true);
+            setShowOtpModal(false);
+            setOtp('');
+        } catch (error) {
+            setOtp('')
+        }
+   
+
+    };
+
+    
+    const handleResendOtp = async () => {
+        if (!canResendOtp) return;
+        clearError();
+        try {
+            await sendOtp({ email });
+            message.success('OTP resent to your email!');
+            setCanResendOtp(false);
+            setResendCooldown(120);
+        } catch (error) {
+            setOtp('')
+        }
+        
+    };
 
     const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -105,31 +196,26 @@ export const RegisterPage: React.FC = () => {
             return;
         }
 
-
         const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
         if (!validTypes.includes(file.type)) {
             setImageError('Please select a valid image file (JPG or PNG)');
             return;
         }
 
-
-        const maxSize = 5 * 1024 * 1024; // 5MB
+        const maxSize = 5 * 1024 * 1024; 
         if (file.size > maxSize) {
             setImageError('Image size must be less than 5MB');
             return;
         }
 
-
         setSelectedImage(file);
 
-        
         const reader = new FileReader();
         reader.onload = (e) => {
             setImagePreview(e.target?.result as string);
         };
         reader.readAsDataURL(file);
     };
-
 
     const removeImage = () => {
         setSelectedImage(undefined);
@@ -143,8 +229,14 @@ export const RegisterPage: React.FC = () => {
     const handleFormSubmit = async (data: RegisterFormData) => {
         if (!passwordsMatch) {
             message.error("Password must match before submitting");
-            return
+            return;
         }
+
+        if (!isEmailVerified) {
+            message.error("Please verify your email before submitting");
+            return;
+        }
+
         const userData: RegisterData = {
             name: data.name,
             email: data.email,
@@ -153,11 +245,13 @@ export const RegisterPage: React.FC = () => {
         }
         await registerUser(userData)
         if (!useAuthStore.getState().error) {
-            message.success("Registraition successful!")
+            message.success("Registration successful!")
             navigate('/login')
         }
     }
-    const isFormValid = passwordsMatch && password && confirmPassword;
+
+    const isFormValid = passwordsMatch && password && confirmPassword && isEmailVerified;
+
     return (
         <Container>
             <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -172,11 +266,8 @@ export const RegisterPage: React.FC = () => {
                         </p>
                     </div>
 
-                  
-
                     <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-8">
                         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
-
 
                             <div className="space-y-4">
                                 <label className="block text-sm font-medium text-neutral-700">
@@ -184,11 +275,9 @@ export const RegisterPage: React.FC = () => {
                                 </label>
 
                                 <div className="flex items-center space-x-4">
-
                                     <div className="relative">
                                         {imagePreview ? (
                                             <div className="relative">
-
                                                 <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-neutral-300">
                                                     <img
                                                         src={imagePreview}
@@ -196,7 +285,6 @@ export const RegisterPage: React.FC = () => {
                                                         className="w-full h-full object-cover"
                                                     />
                                                 </div>
-
                                                 <button
                                                     type="button"
                                                     onClick={removeImage}
@@ -212,7 +300,6 @@ export const RegisterPage: React.FC = () => {
                                             </div>
                                         )}
                                     </div>
-
 
                                     <div className="flex-1">
                                         <input
@@ -240,7 +327,6 @@ export const RegisterPage: React.FC = () => {
                                     </div>
                                 </div>
 
-
                                 {imageError && (
                                     <p className="text-sm text-red-600 flex items-center">
                                         <XCircle className="w-4 h-4 mr-1" />
@@ -248,7 +334,6 @@ export const RegisterPage: React.FC = () => {
                                     </p>
                                 )}
                             </div>
-
 
                             <div className="space-y-4">
                                 <Input
@@ -261,18 +346,52 @@ export const RegisterPage: React.FC = () => {
                                     disabled={isMutating}
                                 />
 
-                                <Input
-                                    label="Email Address"
-                                    type="email"
-                                    {...register('email')}
-                                    error={errors.email?.message}
-                                    leftIcon={Mail}
-                                    placeholder="Enter your email address"
-                                    required
-                                    disabled={isMutating}
-                                />
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-neutral-700">
+                                        Email Address
+                                    </label>
+                                    <div className="flex space-x-2">
+                                        <div className="flex-1">
+                                            <Input
+                                                type="email"
+                                                {...register('email')}
+                                                error={errors.email?.message}
+                                                leftIcon={Mail}
+                                                placeholder="Enter your email address"
+                                                required
+                                                disabled={isMutating}
+                                                className={isEmailVerified ? 'border-green-300 focus:border-green-500' : ''}
+                                            />
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            variant={isEmailVerified ? "secondary" : "primary"}
+                                            size="sm"
+                                            onClick={handleSendOtp}
+                                            disabled={!email || !isValidEmail(email) || isOtpSending || isEmailVerified}
+                                            className="whitespace-nowrap"
+                                        >
+                                            {isEmailVerified ? (
+                                                <>
+                                                    <Shield className="w-4 h-4 mr-1" />
+                                                    Verified
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Shield className="w-4 h-4 mr-1" />
+                                                    Verify
+                                                </>
+                                            )}
+                                        </Button>
+                                    </div>
+                                    {isEmailVerified && (
+                                        <p className="text-sm text-green-600 flex items-center">
+                                            <CheckCircle className="w-4 h-4 mr-1" />
+                                            Email verified successfully!
+                                        </p>
+                                    )}
+                                </div>
                             </div>
-
 
                             <div className="space-y-4">
                                 <div className="relative">
@@ -322,7 +441,6 @@ export const RegisterPage: React.FC = () => {
                                         {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                     </button>
 
-
                                     {confirmPasswordTouched && confirmPassword && (
                                         <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                                             {passwordsMatch ? (
@@ -333,7 +451,6 @@ export const RegisterPage: React.FC = () => {
                                         </div>
                                     )}
                                 </div>
-
 
                                 {confirmPasswordTouched && confirmPassword && (
                                     <div className={`text-sm transition-colors ${passwordsMatch ? 'text-green-600' : 'text-red-600'}`}>
@@ -352,7 +469,6 @@ export const RegisterPage: React.FC = () => {
                                 )}
                             </div>
 
-
                             <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-4">
                                 <h4 className="font-medium text-neutral-900 mb-2">Password Requirements:</h4>
                                 <ul className="text-sm text-neutral-600 space-y-1">
@@ -362,7 +478,6 @@ export const RegisterPage: React.FC = () => {
                                     <li>• At least one number (0-9)</li>
                                 </ul>
                             </div>
-
 
                             <div className="flex items-start space-x-3">
                                 <input
@@ -399,7 +514,6 @@ export const RegisterPage: React.FC = () => {
                                 </div>
                             </div>
 
-
                             <Button
                                 type="submit"
                                 className={`w-full transition-all duration-200 ${!isFormValid && !isMutating ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -417,14 +531,15 @@ export const RegisterPage: React.FC = () => {
                                 )}
                             </Button>
 
-
                             {!isFormValid && !isMutating && (
                                 <p className="text-sm text-neutral-500 text-center">
-                                    Please ensure passwords match to continue
+                                    {!isEmailVerified
+                                        ? "Please verify your email to continue"
+                                        : "Please ensure passwords match to continue"
+                                    }
                                 </p>
                             )}
                         </form>
-
 
                         <div className="mt-6 text-center">
                             <p className="text-sm text-neutral-600">
@@ -440,6 +555,83 @@ export const RegisterPage: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {/* OTP Verification Modal */}
+            <Modal
+                isOpen={showOtpModal }
+                onClose={() => setShowOtpModal(false)}
+                title="Verify Your Email"
+                className="max-w-sm"
+            >
+                <div className="space-y-4">
+                    <div className="text-center">
+                        <div className="mx-auto w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mb-4">
+                            <Shield className="w-8 h-8 text-primary-600" />
+                        </div>
+                        <p className="text-sm text-neutral-600">
+                            We've sent a 6-digit verification code to <strong>{email}</strong>
+                        </p>
+                    </div>
+
+                    <div className="space-y-3">
+                        <label className="block text-sm font-medium text-neutral-700">
+                            Enter OTP
+                        </label>
+                        <Input
+                            type="text"
+                            value={otp}
+                            onChange={(e) => {
+                                const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                setOtp(value);
+                            }}
+                            placeholder="000000"
+                            className="text-center text-lg tracking-widest"
+                            maxLength={6}
+                            error={error || undefined}
+                        />
+                    </div>
+
+                    <div className="flex space-x-3">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setShowOtpModal(false)}
+                            className="flex-1"
+                            disabled={isOtpVerifying}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={handleVerifyOtp}
+                            className="flex-1"
+                            loading={isOtpVerifying}
+                            disabled={!otp || otp.length !== 6}
+                        >
+                            Verify OTP
+                        </Button>
+                    </div>
+
+                    <div className="text-center">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={handleResendOtp}
+                            disabled={!canResendOtp}
+                            className="text-sm"
+                        >
+                            {canResendOtp ? (
+                                'Resend OTP'
+                            ) : (
+                                <span className="flex items-center">
+                                    <Clock className="w-4 h-4 mr-1" />
+                                    Resend in {Math.floor(resendCooldown / 60)}:{(resendCooldown % 60).toString().padStart(2, '0')}
+                                </span>
+                            )}
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
         </Container>
     );
 };

@@ -8,9 +8,9 @@ import {
     Trash2,
     Eye,
     BarChart3,
-    // Settings,
-    // Filter,
-    // Search,
+    
+    
+    
     ChevronRight,
     ChevronLeft
 } from 'lucide-react';
@@ -18,7 +18,7 @@ import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Container from '../components/layout/Container';
 import useEventStore from '../store/eventStore';
-// import { useAuthStore } from '../store/authStore';
+
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { message } from 'antd';
@@ -32,7 +32,7 @@ import { useSocketStore } from '../store/socketStore';
 export const OrganizerDashboard: React.FC = () => {
     const location = useLocation()
     const navigate = useNavigate()
-    // const { user } = useAuthStore()
+    
     const [activeTab, setActiveTab] = useState<'overview' | 'events' | 'analytics' | 'settings'>('overview');
     const { clearError, error, fetchMyEvents, myEvents, isLoading, deleteEvent, isMutating, pagination } = useEventStore();
     const { isConnected } = useSocketStore()
@@ -41,7 +41,7 @@ export const OrganizerDashboard: React.FC = () => {
         activeEvents: 0,
         totalRegistrations: 0,
         thisMonth: 0,
-        updatedAt: ''  // Add this field
+        updatedAt: ''  
     })
     const [currentPage, setCurrentPage] = useState(1);
 
@@ -132,8 +132,8 @@ export const OrganizerDashboard: React.FC = () => {
                         {[
                             { id: 'overview', label: 'Overview', icon: BarChart3 },
                             { id: 'events', label: 'My Events', icon: Calendar },
-                            // { id: 'analytics', label: 'Analytics', icon: TrendingUp },
-                            // { id: 'settings', label: 'Settings', icon: Settings }
+                            
+                            
                         ].map((tab) => (
                             <button
                                 key={tab.id}
@@ -150,12 +150,12 @@ export const OrganizerDashboard: React.FC = () => {
                     </nav>
                 </div>
 
-                {/* Tab Content */}
+                {}
                 <div className="space-y-8">
-                    {/* Overview Tab */}
+                    {}
                     {activeTab === 'overview' && (
                         <div className="space-y-6">
-                            {/* Stats Cards */}
+                            {}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                                 <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
                                     <div className="flex items-center justify-between">
@@ -206,7 +206,7 @@ export const OrganizerDashboard: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Recent Events */}
+                            {}
                             <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
                                 <div className="flex justify-between items-center mb-6">
                                     <h2 className="text-xl font-semibold text-neutral-900">Recent Events</h2>
@@ -223,9 +223,7 @@ export const OrganizerDashboard: React.FC = () => {
                                         >
                                             <div className="flex items-start justify-between mb-3">
                                                 <h3 className="font-semibold text-neutral-900">{event.title}</h3>
-                                                {/* <span className="px-2 py-1 rounded-full text-xs font-medium bg-success-100 text-success-700">
-                                                    Active
-                                                </span> */}
+                                                {}
                                             </div>
 
                                             <div className="space-y-2 text-sm text-neutral-600 mb-3">
@@ -275,10 +273,10 @@ export const OrganizerDashboard: React.FC = () => {
                         </div>
                     )}
 
-                    {/* Events Tab */}
+                    {}
                     {activeTab === 'events' && (
                         <div className="space-y-6">
-                            {/* Header with Actions */}
+                            {}
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
                                 <div>
                                     <h2 className="text-xl font-semibold text-neutral-900">My Events</h2>
@@ -468,7 +466,7 @@ export const OrganizerDashboard: React.FC = () => {
                         </div>
                     )}
 
-                    {/* Analytics Tab */}
+                    {}
                     {activeTab === 'analytics' && (
                         <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
                             <h2 className="text-xl font-semibold text-neutral-900 mb-6">Analytics</h2>
@@ -482,7 +480,7 @@ export const OrganizerDashboard: React.FC = () => {
                         </div>
                     )}
 
-                    {/* Settings Tab */}
+                    {}
                     {activeTab === 'settings' && (
                         <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
                             <h2 className="text-xl font-semibold text-neutral-900 mb-6">Organizer Settings</h2>

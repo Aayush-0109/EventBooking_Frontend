@@ -1,4 +1,4 @@
-// frontend/src/store/userStore.ts
+
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import UserService, { UserQuery } from '../services/userService';
@@ -84,7 +84,7 @@ const useUserStore = create<UserStore>()(
                     isDeleting: false,
                     error: classifiedError.message
                 });
-                throw error; // Re-throw to handle in component
+                throw error; 
             }
         },
 

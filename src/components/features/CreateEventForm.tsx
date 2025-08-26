@@ -12,7 +12,7 @@ import { LocationMap } from './LocationMap';
 import { AddressData } from '../../services/geocodingService';
 import { geocodingService } from '../../services/geocodingService';
 import { message } from 'antd';
-// Form validation schema (for React Hook Form)
+
 const createEventFormSchema = z.object({
   title: z.string()
     .min(3, "Title must have at least 3 characters")
@@ -41,8 +41,8 @@ const createEventFormSchema = z.object({
 
 
 
-// Validated data type (after schema validation)
-type CreateEventFormData = z.infer<typeof createEventFormSchema>;  // ✅ Use same schema
+
+type CreateEventFormData = z.infer<typeof createEventFormSchema>;  
 type CompleteSubmissionData = CreateEventFormData & { images: File[] };
 interface CreateEventFormProps {
   onSubmit: (data: CompleteSubmissionData) => Promise<void>;
@@ -61,7 +61,7 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCa
     formState: { errors },
     setValue,
     trigger,
-    clearErrors, // Add this line
+    clearErrors, 
     watch
   } = useForm<CreateEventFormData>({
     resolver: zodResolver(createEventFormSchema),
@@ -286,13 +286,13 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCa
                 label="Address"
                 {...register('address', {
                   onChange: () => {
-                    // Clear error when user types
+                    
                     if (errors.address) {
                       clearErrors('address');
                     }
                   }
                 })}
-                value={watch('address')} // Add this line to ensure controlled input
+                value={watch('address')} 
                 error={errors.address?.message}
                 placeholder="Complete street address"
                 required
@@ -393,7 +393,7 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCa
           </div>
         </div>
 
-        {/* Image Upload */}
+        {}
         <div className="border-t pt-6">
           <h3 className="text-lg font-semibold text-neutral-900 mb-4 flex items-center">
             <Upload className="w-5 h-5 mr-2" />
@@ -423,7 +423,7 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCa
                 {selectedImages.map((_, index) => (
                   <div key={index} className="relative">
                     <img
-                      src={imageUrls[index]} // ✅ Use tracked URL instead of creating new one
+                      src={imageUrls[index]} 
                       alt={`Preview ${index + 1}`}
                       className="w-full h-24 object-cover rounded-lg"
                     />
@@ -431,7 +431,7 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCa
                       type="button"
                       onClick={() => removeImage(index)}
                       className="absolute -top-2 -right-2 bg-error-500 text-white rounded-full p-1 hover:bg-error-600"
-                      disabled={isMutating} // ✅ Disable during loading
+                      disabled={isMutating} 
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -442,7 +442,7 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit, onCa
           </div>
         </div>
 
-        {/* Form Actions */}
+        {}
         <div className="flex justify-end space-x-3 pt-6 border-t">
           <Button
             type="button"

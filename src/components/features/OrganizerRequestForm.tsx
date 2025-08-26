@@ -69,7 +69,7 @@ useEffect(()=>{
                 message.warning('Please upload a PDF or document file');
                 return;
             }
-            // Validate file size (5MB limit)
+            
             if (file.size > 5 * 1024 * 1024) {
                 message.warning('File size must be less than 5MB');
                 return;
@@ -95,7 +95,7 @@ useEffect(()=>{
             </div>
 
             <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
-                {/* Overview Section */}
+                {}
                 <div>
                     <label className="block text-sm font-medium text-neutral-700 mb-2">
                         Overview
@@ -116,7 +116,7 @@ useEffect(()=>{
                     </p>
                 </div>
 
-                {/* Resume Upload Section */}
+                {}
                 <div>
                     <h3 className="text-lg font-semibold text-neutral-900 mb-4 flex items-center">
                         <FileText className="w-5 h-5 mr-2" />
@@ -164,7 +164,7 @@ useEffect(()=>{
                     </div>
                 </div>
 
-                {/* Information Section */}
+                {}
                 <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
                     <h4 className="font-medium text-primary-900 mb-2 flex items-center">
                         <User className="w-4 h-4 mr-2" />
@@ -178,7 +178,7 @@ useEffect(()=>{
                     </ul>
                 </div>
 
-                {/* Form Actions */}
+                {}
                 <div className="flex justify-end space-x-3 pt-6 border-t">
                     <Button
                         type="button"

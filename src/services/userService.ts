@@ -1,4 +1,4 @@
-// frontend/src/services/userService.ts
+
 import { get, del } from './api/client';
 
 export interface UserQuery {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Search, Filter, MapPin, Calendar, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Filter, MapPin, Calendar,  ChevronLeft, ChevronRight } from 'lucide-react';
 import { message } from 'antd';
 
 import Container from '../components/layout/Container';
@@ -45,7 +45,7 @@ const EventsPage: React.FC = () => {
     useEffect(() => {
         const timeout = setTimeout(() => {
             if (JSON.stringify(tempFilters) !== JSON.stringify(selectedFilters)) {
-                setCurrentPage(1); // Auto-reset page when filters change
+                setCurrentPage(1); 
             }
         }, 500)
 
@@ -113,7 +113,7 @@ const EventsPage: React.FC = () => {
     return (
         <Container>
             <div className="space-y-6">
-                {/* Header Section */}
+                {}
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
                         <h1 className="text-3xl font-heading font-bold text-neutral-800">
@@ -149,9 +149,9 @@ const EventsPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Search and Filter Section */}
+                {}
                 <div className="flex flex-col sm:flex-row gap-4">
-                    {/* Search Input */}
+                    {}
                     <div className="flex-1">
                         <Input
                             placeholder="Search events by title, description, location..."
@@ -162,7 +162,7 @@ const EventsPage: React.FC = () => {
                         />
                     </div>
 
-                    {/* Filter Button */}
+                    {}
                     <Button
                         variant="outline"
                         onClick={() => setShowFilters(!showFilters)}
@@ -177,13 +177,13 @@ const EventsPage: React.FC = () => {
                     </Button>
                 </div>
 
-                {/* Advanced Filters Panel */}
+                {}
                 {showFilters && (
                     <div className="bg-white rounded-lg border border-neutral-200 p-6 space-y-4">
                         <h3 className="text-lg font-semibold text-neutral-800">Filter Events</h3>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            {/* Location Filter */}
+                            {}
                             <Input
                                 label="Location"
                                 placeholder="Enter location"
@@ -192,7 +192,7 @@ const EventsPage: React.FC = () => {
                                 leftIcon={MapPin}
                             />
 
-                            {/* Date Filters */}
+                            {}
                             <Input
                                 label="Date From"
                                 type="date"
@@ -210,9 +210,9 @@ const EventsPage: React.FC = () => {
                             />
                         </div>
 
-                        {/* Sorting Options */}
+                        {}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {/* Sort By */}
+                            {}
                             <div>
                                 <label className="block text-sm font-medium text-neutral-700 mb-2">
                                     Sort By
@@ -235,7 +235,7 @@ const EventsPage: React.FC = () => {
                                 </select>
                             </div>
 
-                            {/* Results Per Page */}
+                            {}
                             <div>
                                 <label className="block text-sm font-medium text-neutral-700 mb-2">
                                     Results Per Page
@@ -252,7 +252,7 @@ const EventsPage: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Filter Actions */}
+                        {}
                         <div className="flex justify-end gap-3">
                             <Button variant="ghost" onClick={handleClearFilters}>
                                 Clear All
@@ -263,7 +263,7 @@ const EventsPage: React.FC = () => {
 
                
 
-                {/* Events Content */}
+                {}
                 <div className="space-y-6">
                     {isLoading ? (
                         <div className="flex items-center justify-center py-12">
@@ -295,7 +295,7 @@ const EventsPage: React.FC = () => {
                         </div>
                     ) : (
                         <>
-                            {/* Events Grid */}
+                            {}
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                 {allEvents.map((event) => (
                                     <EventCard
@@ -339,12 +339,12 @@ const EventsPage: React.FC = () => {
                                             ))}
                                         </div>
 
-                                        {/* Mobile Page Info */}
+                                        {}
                                         <div className="sm:hidden text-sm text-neutral-600">
                                             {currentPage} / {totalPages}
                                         </div>
 
-                                        {/* Next Button */}
+                                        {}
                                         <Button
                                             variant="outline"
                                             size="sm"

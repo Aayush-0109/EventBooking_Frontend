@@ -37,7 +37,7 @@ export interface Event {
     id: number;
     title: string;
     description: string;
-    date: string; // Backend returns Date, but we'll handle conversion
+    date: string; 
     address: string;
     city: string;
     state: string;
@@ -45,13 +45,13 @@ export interface Event {
     postalCode: string;
     longitude: number;
     latitude: number;
-    images: string | string[] | null; // Backend returns string | null for nearby events
+    images: string | string[] | null; 
     createdBy: number;
     createdAt: string;
     updatedAt: string;
-    distance?: number; // Added by backend for nearby events
+    distance?: number; 
 
-    user?: {                 // Creator information
+    user?: {                 
         id: number;
         name: string;
         email?: string;
@@ -137,7 +137,7 @@ export interface Registration {
     userId: number;
     eventId: number;
     createdAt: string;
-    // Optional populated fields
+    
     user?: {
         id: number;
         name: string;
@@ -170,7 +170,7 @@ export interface OrganizerRequest {
 }
 export interface UpdateRequestStatusResponse {
     updatedRequest: OrganizerRequest;
-    updatedUser: User | null; // null if role didn't change
+    updatedUser: User | null; 
 }
 export interface CreateOrganizerRequestData {
     overview: string;
@@ -187,10 +187,10 @@ export interface OrganizerRequestQuery {
 export interface FileUploadConfig {
     fieldName: string;
     allowedTypes?: string[];
-    maxSize?: number;        // in bytes
+    maxSize?: number;        
 }
 
-// Request configuration
+
 export interface RequestConfig {
     skipAuth?: boolean;
     timeout?: number;
@@ -202,4 +202,12 @@ export interface PaginationState {
     totalItems: number
     hasNext: boolean
     hasPrev: boolean
+}
+
+export interface SendOtpData{
+    email:string
+}
+export interface VerifyOtpData{
+    email:string
+    otp:number
 }

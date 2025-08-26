@@ -2,7 +2,7 @@ import axios, { AxiosError, AxiosInstance, AxiosResponse, AxiosRequestConfig } f
 import { getApiUrl, isDevelopment } from '../../config/environment';
 import { ApiResponse } from './types';
 
-// Create axios instance with your existing configuration
+
 export const createApiClient = (): AxiosInstance => {
     const client = axios.create({
         baseURL: getApiUrl(),
@@ -13,7 +13,7 @@ export const createApiClient = (): AxiosInstance => {
         withCredentials: true
     });
 
-    // Your existing request interceptor
+    
     client.interceptors.request.use(
         (config) => {
             if (isDevelopment()) {
@@ -101,5 +101,5 @@ export const put = <T = any>(
     return apiClient.put<ApiResponse<T>>(url, data, config);
 };
 
-// Export for direct use (backward compatibility)
+
 export default apiClient;

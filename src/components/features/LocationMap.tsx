@@ -9,7 +9,7 @@ interface LocationMapProps {
     onLocationSelect: (coords: { lat: number; lng: number }) => void;
     coords: { lat: number; lng: number };
     initialCoords: { lat: number; lng: number };
-    onAddressSelect?: (address: AddressData) => void; // Add this line
+    onAddressSelect?: (address: AddressData) => void; 
 }
 
 export const LocationMap: React.FC<LocationMapProps> = ({ className = "h-96 w-full", onLocationSelect, coords, initialCoords, onAddressSelect }) => {
@@ -36,7 +36,7 @@ export const LocationMap: React.FC<LocationMapProps> = ({ className = "h-96 w-fu
         onLocationSelect(initialCoords);
         setSearchQuery("");
 
-        // Add this line to trigger reverse geocoding
+        
         handleReverseGeocoding(initialCoords.lat, initialCoords.lng);
     }, [initialCoords, onLocationSelect, handleReverseGeocoding]);
 
@@ -46,7 +46,7 @@ export const LocationMap: React.FC<LocationMapProps> = ({ className = "h-96 w-fu
         const result = await geocodingService.forwardGeocode(query);
 
         if (result) {
-            // Center map on searched location (NO marker movement)
+            
             mapInstanceRef.current?.setView([result.lat, result.lng], 15);
         }
     }, []);
@@ -97,9 +97,9 @@ export const LocationMap: React.FC<LocationMapProps> = ({ className = "h-96 w-fu
 
     return (
         <div className={className}>
-            {/* Fixed Header - Never gets hidden */}
+            {}
             <div className="bg-white border border-gray-300 rounded-t-lg p-3 shadow-sm">
-                {/* Search Row */}
+                {}
                 <div className="flex mb-3">
                     <input
                         type="text"
@@ -125,15 +125,15 @@ export const LocationMap: React.FC<LocationMapProps> = ({ className = "h-96 w-fu
                     </button>
                 </div>
 
-                {/* Controls Row */}
+                {}
                 <div className="flex justify-between items-center">
-                    {/* Coordinates Display */}
+                    {}
                     <div className="text-sm text-gray-700">
                         <span className="font-medium">Coordinates: </span>
                         <span>Lat: {coords.lat.toFixed(6)}, Lng: {coords.lng.toFixed(6)}</span>
                     </div>
 
-                    {/* Reset Button */}
+                    {}
                     <button
                         onClick={(e) => {
                             e.preventDefault();
@@ -146,13 +146,13 @@ export const LocationMap: React.FC<LocationMapProps> = ({ className = "h-96 w-fu
                 </div>
             </div>
 
-            {/* Map Container - Below the fixed header */}
+            {}
             <div
                 ref={mapRef}
                 className='w-full rounded-b-lg overflow-hidden border-x border-b border-gray-300'
                 style={{
                     cursor: 'crosshair',
-                    height: 'calc(100% - 120px)' // Subtract header height
+                    height: 'calc(100% - 120px)' 
                 }}
             ></div>
         </div>

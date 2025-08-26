@@ -4,8 +4,8 @@ import {
   User,
   Calendar,
   MapPin,
-  // Settings,
-  // LogOut,
+  
+  
   Edit,
   Eye,
   ChevronRight,
@@ -31,22 +31,22 @@ const profileSchema = z
       .string()
       .optional()
       .refine((val) => {
-        // If name is empty/undefined, it's valid
+        
         if (!val || val.trim().length === 0) {
           return true;
         }
-        // If name is provided, apply length validation
+        
         return val.length >= 2 && val.length <= 50;
       }, "Name must be at least 2 characters and maximum 50 characters"),
     password: z
       .string()
       .optional()
       .refine((val) => {
-        // If password is empty/undefined, it's valid
+        
         if (!val || val.trim().length === 0) {
           return true;
         }
-        // If password is provided, apply all validations
+        
         return val.length >= 8 &&
           /[A-Z]/.test(val) &&
           /[a-z]/.test(val) &&
@@ -55,11 +55,11 @@ const profileSchema = z
     confirmPassword: z.string().optional(),
   })
   .refine((data) => {
-    // If password provided → confirmPassword must match
+    
     if (data.password && data.password.trim().length > 0) {
       return data.password === data.confirmPassword;
     }
-    return true; // skip when password is empty
+    return true; 
   });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -117,7 +117,7 @@ export const UserDashboard: React.FC = () => {
   const { register, watch, handleSubmit, formState: { errors }, reset } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      name: "",  // Set to empty string if no user name
+      name: "",  
       password: "",
       confirmPassword: ""
     },
@@ -292,7 +292,7 @@ export const UserDashboard: React.FC = () => {
                       disabled={isMutating}
                     />
 
-                    {/* Password */}
+                    {}
                     <div className="relative">
                       <Input
                         label="New Password (leave blank to keep current)"
@@ -313,7 +313,7 @@ export const UserDashboard: React.FC = () => {
                       </button>
                     </div>
 
-                    {/* Confirm Password */}
+                    {}
                     {password && (
                       <div className="relative">
                         <Input

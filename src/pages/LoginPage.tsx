@@ -13,7 +13,7 @@ import { useAuthStore } from '../store/authStore';
 import { useEffect } from 'react';
 import { useNavigate ,useLocation} from 'react-router-dom';
 
-// Login form validation schema matching backend exactly
+
 const loginSchema = z.object({
     email: z
         .email("Invalid email format")

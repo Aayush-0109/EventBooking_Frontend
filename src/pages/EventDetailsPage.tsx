@@ -102,9 +102,9 @@ export const EventDetailsPage: React.FC = () => {
                 </button>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Main Content */}
+                    {}
                     <div className="lg:col-span-2 space-y-8">
-                        {/* Event Images */}
+                        {}
                         <div className="space-y-4">
                             <div className="relative h-96 rounded-xl overflow-hidden">
                                 {(currentEvent.images && currentEvent.images.length > 0) ?
@@ -117,7 +117,7 @@ export const EventDetailsPage: React.FC = () => {
                                 }
                             </div>
 
-                            {/* Image Thumbnails */}
+                            {}
                             {currentEvent.images && currentEvent.images.length > 1 && (
                                 <div className="flex space-x-2 overflow-x-auto">
                                     {Array.isArray(currentEvent.images) && currentEvent.images.map((image, index) => (
@@ -140,7 +140,7 @@ export const EventDetailsPage: React.FC = () => {
                             )}
                         </div>
 
-                        {/* Event Details */}
+                        {}
                         <div className="space-y-6">
                             <div>
                                 <h1 className="text-3xl font-bold text-neutral-900 mb-4">
@@ -151,7 +151,7 @@ export const EventDetailsPage: React.FC = () => {
                                 </p>
                             </div>
 
-                            {/* Event Info Grid */}
+                            {}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-4">
                                     <div className="flex items-center space-x-3">
@@ -203,10 +203,10 @@ export const EventDetailsPage: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Sidebar */}
+                    {}
                     <div className="lg:col-span-1">
                         <div className="bg-white rounded-xl shadow-soft border border-neutral-200 p-6 sticky top-8">
-                            {/* Booking Button */}
+                            {}
                             <Button
                                 variant="primary"
                                 size="lg"
@@ -218,7 +218,7 @@ export const EventDetailsPage: React.FC = () => {
                                 {isMutating ? 'Booking...' : 'Book This Event'}
                             </Button>
 
-                            {/* Action Buttons */}
+                            {}
                             <div className="flex space-x-2 mb-6">
                                 <Button
                                     variant="outline"
@@ -237,7 +237,7 @@ export const EventDetailsPage: React.FC = () => {
                                 </Button>
                             </div>
 
-                            {/* Event Stats */}
+                            {}
                             <div className="pt-6 border-t border-neutral-200">
                                 <div className="space-y-3">
 

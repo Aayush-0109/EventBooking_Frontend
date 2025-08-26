@@ -1,4 +1,4 @@
-// frontend/src/pages/AdminManageEventsPage.tsx
+
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -143,7 +143,7 @@ const AdminManageEventsPage: React.FC = () => {
     return (
         <Container>
             <div className="py-8">
-                {/* Header */}
+                {}
                 <div className="mb-8">
                     <div className="flex items-center gap-4 mb-4">
                         <Button
@@ -159,7 +159,7 @@ const AdminManageEventsPage: React.FC = () => {
                     <p className="text-neutral-600">View and manage all platform events</p>
                 </div>
 
-                {/* Search and Filters */}
+                {}
                 <div className="mb-6 space-y-4">
                     <div className="flex flex-col sm:flex-row gap-4">
                         <div className="relative flex-1">
@@ -207,7 +207,7 @@ const AdminManageEventsPage: React.FC = () => {
 
                 
 
-                {/* Events List */}
+                {}
                 <div className="space-y-4">
                     {allEvents.map((event) => {
                         const eventStatus = getEventStatus(event.date);
@@ -296,7 +296,7 @@ const AdminManageEventsPage: React.FC = () => {
                     })}
                 </div>
 
-                {/* Empty State */}
+                {}
                 {allEvents.length === 0 && !isLoading && (
                     <div className="text-center py-12">
                         <Calendar className="w-12 h-12 text-neutral-400 mx-auto mb-4" />
@@ -310,10 +310,10 @@ const AdminManageEventsPage: React.FC = () => {
                     </div>
                 )}
 
-                {/* Pagination - Using Your Exact Pattern */}
+                {}
                 {pagination.allEvents.totalPages > 1 && (
                     <div className="flex items-center justify-between border-t border-neutral-200 pt-6 mt-6">
-                        {/* Info */}
+                        {}
                         <div className="text-sm text-neutral-700">
                             Page {pagination.allEvents.currentPage} of {pagination.allEvents.totalPages} • {pagination.allEvents.totalItems} total events
                         </div>

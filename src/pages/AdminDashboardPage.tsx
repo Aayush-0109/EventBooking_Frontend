@@ -63,7 +63,7 @@ const AdminDashboardPage: React.FC = () => {
 
         websocketService.emit('request_admin_stats');
 
-        // Cleanup on unmount
+        
         return () => {
             websocketService.off('dashboard_stats_update');
             websocketService.off('dashboard_online_update');
@@ -169,7 +169,7 @@ const AdminDashboardPage: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Pending Requests */}
+                    {}
                     <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
                         <div className="flex justify-between items-center mb-6">
                             <div>

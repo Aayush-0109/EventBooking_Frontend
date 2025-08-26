@@ -28,7 +28,7 @@ export const NearbyEventsMap: React.FC<NearbyEventsMapProps> = ({
     const mapInstanceRef = useRef<L.Map | null>(null);
     const markersRef = useRef<Map<number, L.Marker>>(new Map());
     const radiusCircleRef = useRef<L.Circle | null>(null);
-    const searchLocationMarkerRef = useRef<L.Marker | null>(null); // Add ref for search location marker
+    const searchLocationMarkerRef = useRef<L.Marker | null>(null); 
     const [searchQuery, setSearchQuery] = useState('');
     const [currentCoords, setCurrentCoords] = useState({ lat: 28.6139, lng: 77.2088 });
     const [unit, setUnit] = useState<'km' | 'Mi'>('km');
@@ -91,7 +91,7 @@ export const NearbyEventsMap: React.FC<NearbyEventsMapProps> = ({
         }
     }, [onEventSelect]);
 
-    // Initialize map
+    
     useEffect(() => {
         if (!mapRef.current) return;
 
@@ -103,18 +103,18 @@ export const NearbyEventsMap: React.FC<NearbyEventsMapProps> = ({
 
         mapInstanceRef.current = map;
 
-        // Add radius circle
+        
         const radiusCircle = L.circle([currentCoords.lat, currentCoords.lng], {
             color: 'red',
             fillColor: '#f03',
             fillOpacity: 0.1,
-            radius: currentRadius * (unit === 'Mi' ? 1609.34 : 1000) // Convert to meters
+            radius: currentRadius * (unit === 'Mi' ? 1609.34 : 1000) 
         }).addTo(map);
 
-        // Store circle reference
+        
         radiusCircleRef.current = radiusCircle;
 
-        // Add search location marker (blue marker with cross) - Make it draggable
+        
         const searchMarker = L.marker([currentCoords.lat, currentCoords.lng], {
             icon: L.divIcon({
                 className: 'search-location-marker',
@@ -129,16 +129,16 @@ export const NearbyEventsMap: React.FC<NearbyEventsMapProps> = ({
                 iconSize: [24, 24],
                 iconAnchor: [12, 12]
             }),
-            draggable: true // Only search marker is draggable
+            draggable: true 
         }).addTo(map);
 
-        // Add drag handlers for search marker
+        
         searchMarker.on('dragend', (e) => {
             const newLat = e.target.getLatLng().lat;
             const newLng = e.target.getLatLng().lng;
             const newCoords = { lat: newLat, lng: newLng };
 
-            // Update current coordinates
+            
             setCurrentCoords(newCoords);
 
             if (onLocationUpdate) {
@@ -155,7 +155,7 @@ export const NearbyEventsMap: React.FC<NearbyEventsMapProps> = ({
             const { lat, lng } = e.latlng;
             const newCoords = { lat, lng };
 
-            // Update current coordinates
+            
             setCurrentCoords(newCoords);
 
            
@@ -199,19 +199,19 @@ export const NearbyEventsMap: React.FC<NearbyEventsMapProps> = ({
     useEffect(() => {
         if (!mapInstanceRef.current) return;
 
-        // Clear existing markers
+        
         markersRef.current.forEach(marker => {
             marker.remove();
         });
         markersRef.current.clear();
 
-        // Add new markers
+        
         events.forEach(event => {
             createEventMarker(event);
         });
     }, [events, createEventMarker]);
 
-    // Handle search
+    
     const handleSearch = async (query: string) => {
         if (query.length < 3) return;
 
@@ -227,7 +227,7 @@ export const NearbyEventsMap: React.FC<NearbyEventsMapProps> = ({
         }
     };
 
-    // Handle current location
+    
     const handleCurrentLocation = () => {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(

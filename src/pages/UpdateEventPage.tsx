@@ -32,7 +32,7 @@ export const UpdateEventPage: React.FC = () => {
             await updateEvent(parseInt(id), data);
             message.success('Event updated successfully!');
 
-            // Navigate back to the previous page or organizer dashboard
+            
             const from = location.state?.from || '/organizer/dashboard';
             navigate(from);
         } catch (error) {

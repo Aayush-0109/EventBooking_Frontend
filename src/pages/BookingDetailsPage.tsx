@@ -14,7 +14,7 @@ import Container from '../components/layout/Container';
 import useBookingStore from '../store/bookingStore';
 import { message } from 'antd';
 
-// Mock booking data - matches backend schema exactly
+
 
 
 const BookingDetailsPage: React.FC = () => {
@@ -95,7 +95,7 @@ const BookingDetailsPage: React.FC = () => {
     return (
         <Container>
             <div className="py-8">
-                {/* Back Button */}
+                {}
                 <Button
                     variant="outline"
                     onClick={handleBack}
@@ -218,7 +218,7 @@ const BookingDetailsPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Actions */}
+                            {}
                             <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
                                 <h2 className="text-xl font-semibold text-neutral-900 mb-4">Actions</h2>
 

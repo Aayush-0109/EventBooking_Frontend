@@ -26,7 +26,7 @@ export const AuthProvider  = ({children} : AuthProviderProps)=>{
             }
         })()
     },[])
-      // Show loading screen while checking authentication
+      
       if (isInitializing || isAuthChecking) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100">

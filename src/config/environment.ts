@@ -21,7 +21,7 @@ const getEnvironmentConfig =():EnvironmentConfig=>{
         throw new Error('VITE_API_URL environment variable is required');
     }
 
-       // ✅ Validate log level
+       
        const validLogLevels = ['debug', 'info', 'warn', 'error'];
        if (logLevel && !validLogLevels.includes(logLevel)) {
            throw new Error(`Invalid VITE_LOG_LEVEL: ${logLevel}. Must be one of: ${validLogLevels.join(', ')}`);

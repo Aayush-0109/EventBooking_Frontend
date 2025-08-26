@@ -13,7 +13,7 @@ import { LocationMap } from './LocationMap';
 import { geocodingService, AddressData } from '../../services/geocodingService';
 import { message } from 'antd';
 
-// Form validation schema for updates (all fields optional)
+
 const updateEventFormSchema = z.object({
   title: z.string()
     .min(3, "Title must have at least 3 characters")
@@ -44,15 +44,15 @@ const updateEventFormSchema = z.object({
   country: z.string().min(2, "Country is required").optional(),
   postalCode: z.string().min(3, "Postal code is required").optional(),
 }).refine(data => {
-  // At least one field must be provided
+  
   const hasAnyField = Object.values(data).some(value => value !== undefined && value !== '');
 
-  // If updating location, all address fields must be provided together
+  
   const addressFields = [data.address, data.address, data.city, data.state, data.country, data.postalCode];
   const hasAnyAddressField = addressFields.some(field => field !== undefined && field !== '');
   const hasAllAddressFields = addressFields.every(field => field !== undefined && field !== '');
 
-  // If updating coordinates, both must be provided
+  
   const hasAnyGeoField = data.longitude !== undefined || data.latitude !== undefined;
   const hasAllGeoFields = data.longitude !== undefined && data.latitude !== undefined;
 
@@ -91,7 +91,7 @@ export const UpdateEventForm: React.FC<UpdateEventFormProps> = ({ event, onSubmi
     defaultValues: {
       title: event.title,
       description: event.description,
-      date: new Date(event.date).toISOString().slice(0, 16), // Format for datetime-local input
+      date: new Date(event.date).toISOString().slice(0, 16), 
       longitude: event.longitude,
       latitude: event.latitude,
       address: event.address,
@@ -165,7 +165,7 @@ export const UpdateEventForm: React.FC<UpdateEventFormProps> = ({ event, onSubmi
           try {
             const addressData = await geocodingService.reverseGeocode(lat, lng);
             if (addressData) {
-              // Update all address fields
+              
               setValue('address', addressData.address);
               setValue('city', addressData.city);
               setValue('state', addressData.state);
