@@ -21,14 +21,14 @@ export default function SocketWrapper({ children }: SocketWrapperProps) {
           websocketService.on('disconnect', onDisconnect);
         };
         const detach = () => {
-          websocketService.off('connect');
-          websocketService.off('disconnect');
+          websocketService.off('connect',onConnect);
+          websocketService.off('disconnect',onDisconnect);
         };
       
         const run = async () => {
           if (isAuthenticated && user?.id) {
             console.log('🔌 Connecting to WebSocket...');
-            await websocketService.connect(); // waits for token fetch + socket connect flow
+            await websocketService.connect(); 
             if (!didUnmount) attach();
           } else {
             detach();

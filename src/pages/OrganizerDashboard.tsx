@@ -35,7 +35,6 @@ export const OrganizerDashboard: React.FC = () => {
     
     const [activeTab, setActiveTab] = useState<'overview' | 'events' | 'analytics' | 'settings'>('overview');
     const { clearError, error, fetchMyEvents, myEvents, isLoading, deleteEvent, isMutating, pagination } = useEventStore();
-    const { isConnected } = useSocketStore()
     const [stats, setStats] = useState({
         totalEvents: 0,
         activeEvents: 0,
@@ -83,9 +82,9 @@ export const OrganizerDashboard: React.FC = () => {
           if (websocketService.connected) onWsConnect();
         
           return () => {
-            websocketService.off('organizer_stats_update');
-            websocketService.off('error');
-            websocketService.off('connect');
+            websocketService.off('organizer_stats_update',onStats);
+            websocketService.off('error',onWsErr);
+            websocketService.off('connect',onWsConnect);
           };
     }, [])
 

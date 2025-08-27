@@ -62,10 +62,10 @@ const AdminDashboardPage: React.FC = () => {
         if (websocketService.connected) onWsConnect();
       
         return () => {
-          websocketService.off('dashboard_stats_update');
-          websocketService.off('dashboard_online_update');
-          websocketService.off('error');
-          websocketService.off('connect');
+          websocketService.off('dashboard_stats_update',onStats);
+          websocketService.off('dashboard_online_update',onOnline);
+          websocketService.off('error',onWsErr);
+          websocketService.off('connect',onWsConnect);
         };
     }, []);
 
