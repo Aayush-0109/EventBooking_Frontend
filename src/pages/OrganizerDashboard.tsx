@@ -32,6 +32,7 @@ import { useSocketStore } from '../store/socketStore';
 export const OrganizerDashboard: React.FC = () => {
     const location = useLocation()
     const navigate = useNavigate()
+    const {isConnected} = useSocketStore()
     
     const [activeTab, setActiveTab] = useState<'overview' | 'events' | 'analytics' | 'settings'>('overview');
     const { clearError, error, fetchMyEvents, myEvents, isLoading, deleteEvent, isMutating, pagination } = useEventStore();
@@ -69,24 +70,20 @@ export const OrganizerDashboard: React.FC = () => {
             console.log('Received organizer stats:', s);
             setStats(s); // replace with your state setter
           };
-          const onWsErr = (e: any) => console.error('WebSocket error:', e);
           const onWsConnect = () => {
             console.log('WS connected – requesting organizer stats');
             websocketService.emit('request_organizer_stats');
           };
         
           websocketService.on('organizer_stats_update', onStats);
-          websocketService.on('error', onWsErr);
-          websocketService.on('connect', onWsConnect);
+          
         
-          if (websocketService.connected) onWsConnect();
+          if (isConnected) onWsConnect();
         
           return () => {
             websocketService.off('organizer_stats_update',onStats);
-            websocketService.off('error',onWsErr);
-            websocketService.off('connect',onWsConnect);
           };
-    }, [])
+    }, [isConnected])
 
 
 
