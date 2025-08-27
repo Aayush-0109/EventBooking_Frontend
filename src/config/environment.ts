@@ -29,7 +29,7 @@ const getEnvironmentConfig =():EnvironmentConfig=>{
        
        return {
            apiUrl,
-           appTitle: appTitle || 'EventBooking',
+           appTitle: appTitle || 'EventSphere',
            logLevel: (logLevel as any) || 'info',
            enableDevTools,
            enableConsoleLogs,

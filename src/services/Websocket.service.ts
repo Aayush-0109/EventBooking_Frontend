@@ -24,6 +24,10 @@ class WebSocketService {
             console.error('WebSocket connection error:', error);
             this.isConnected = false;
         });
+        this.socket.on('auth_error', (error) => {
+            console.error('WebSocket authentication error:', error);
+            this.isConnected = false;
+        });
     }
 
     disconnect() {
