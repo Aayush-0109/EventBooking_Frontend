@@ -1,13 +1,18 @@
 import { io, Socket } from 'socket.io-client'
+import apiClient from './api/client';
 
 class WebSocketService {
     private socket: Socket | null = null;
     private isConnected = false;
 
-    connect() {
+   async connect() {
         if (this.socket?.connected) return;
+
+   const resp = await apiClient.post("/auth/socket-token")
+   const token = resp.data.data.token;
+
         this.socket = io(import.meta.env.VITE_WEBSOCKET_URL, {
-            withCredentials: true,
+            auth: {token},
             transports: ['websocket', 'polling']
         });
         this.socket.on('connect', () => {
