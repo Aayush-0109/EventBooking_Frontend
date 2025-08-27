@@ -22,7 +22,7 @@ import useEventStore from '../store/eventStore';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { message } from 'antd';
-import WebsocketService from '../services/Websocket.service';
+import websocketService from '../services/Websocket.service';
 import { useSocketStore } from '../store/socketStore';
 
 
@@ -66,17 +66,28 @@ export const OrganizerDashboard: React.FC = () => {
     },[error])
 
     useEffect(() => {
-        if (!isConnected) return
-        WebsocketService.on("organizer_stats_update", (newStats) => {
-            console.log(newStats);
-
-            setStats(newStats)
-        })
-        WebsocketService.emit("request_organizer_stats");
-        return () => {
-            WebsocketService.off("organizer_stats_update")
-        }
-    }, [isConnected])
+        const onStats = (s: any) => {
+            console.log('Received organizer stats:', s);
+            setStats(s); // replace with your state setter
+          };
+          const onWsErr = (e: any) => console.error('WebSocket error:', e);
+          const onWsConnect = () => {
+            console.log('WS connected – requesting organizer stats');
+            websocketService.emit('request_organizer_stats');
+          };
+        
+          websocketService.on('organizer_stats_update', onStats);
+          websocketService.on('error', onWsErr);
+          websocketService.on('connect', onWsConnect);
+        
+          if (websocketService.connected) onWsConnect();
+        
+          return () => {
+            websocketService.off('organizer_stats_update');
+            websocketService.off('error');
+            websocketService.off('connect');
+          };
+    }, [])
 
 
 

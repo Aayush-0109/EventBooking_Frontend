@@ -46,29 +46,28 @@ const AdminDashboardPage: React.FC = () => {
     }, [fetchAllRequests]);
 
     useEffect(() => {
-        if (!isConnected) return;
-        websocketService.on('dashboard_stats_update', (newStats) => {
-            console.log('Received stats update:', newStats);
-            setStats(newStats);
-        });
-
-        websocketService.on('dashboard_online_update', (data) => {
-            console.log('Received online update:', data);
-            setOnlineUsers(data.onlineUsers);
-        });
-
-        websocketService.on('error', (error) => {
-            console.error('WebSocket error:', error);
-        });
-
-        websocketService.emit('request_admin_stats');
-
-        
-        return () => {
-            websocketService.off('dashboard_stats_update');
-            websocketService.off('dashboard_online_update');
+        const onStats = (s:any)=>{ console.log('Received stats update:', s); setStats(s); };
+        const onOnline = (d:any)=>{ console.log('Received online update:', d); setOnlineUsers(d.onlineUsers); };
+        const onWsErr = (e:any)=> console.error('WebSocket error:', e);
+        const onWsConnect = () => {
+          console.log('WS connected – requesting admin stats');
+          websocketService.emit('request_admin_stats');
         };
-    }, [isConnected]);
+      
+        websocketService.on('dashboard_stats_update', onStats);
+        websocketService.on('dashboard_online_update', onOnline);
+        websocketService.on('error', onWsErr);
+        websocketService.on('connect', onWsConnect);
+      
+        if (websocketService.connected) onWsConnect();
+      
+        return () => {
+          websocketService.off('dashboard_stats_update');
+          websocketService.off('dashboard_online_update');
+          websocketService.off('error');
+          websocketService.off('connect');
+        };
+    }, []);
 
 
 

@@ -1,6 +1,6 @@
 import { useEffect, ReactNode } from 'react';
 import websocketService from '../../services/Websocket.service';
-import {useAuthStore} from '../../store/authStore';
+import { useAuthStore } from '../../store/authStore';
 import { useSocketStore } from '../../store/socketStore';
 interface SocketWrapperProps {
     children: ReactNode;
@@ -8,26 +8,44 @@ interface SocketWrapperProps {
 
 export default function SocketWrapper({ children }: SocketWrapperProps) {
     const { isAuthenticated, user } = useAuthStore();
-    const {setConnected} = useSocketStore();
+    const { setConnected } = useSocketStore();
 
     useEffect(() => {
-        if (isAuthenticated && user?.id) {
+        let didUnmount = false;
+      
+        const onConnect = () => setConnected(true);
+        const onDisconnect = () => setConnected(false);
+      
+        const attach = () => {
+          websocketService.on('connect', onConnect);
+          websocketService.on('disconnect', onDisconnect);
+        };
+        const detach = () => {
+          websocketService.off('connect');
+          websocketService.off('disconnect');
+        };
+      
+        const run = async () => {
+          if (isAuthenticated && user?.id) {
             console.log('🔌 Connecting to WebSocket...');
-            websocketService.connect();
-
-            websocketService.on('connect',()=> setConnected(true));
-            websocketService.on('disconnect',()=> setConnected(false))
-
-            return () => {
-                console.log(' Disconnecting from WebSocket...');
-                websocketService.disconnect();
-            };
-        } else {
+            await websocketService.connect(); // waits for token fetch + socket connect flow
+            if (!didUnmount) attach();
+          } else {
+            detach();
             websocketService.disconnect();
-            setConnected(false)
-
-        }
-    }, [isAuthenticated, user?.id]);
+            setConnected(false);
+          }
+        };
+      
+        run();
+      
+        return () => {
+          didUnmount = true;
+          detach();
+          console.log('Disconnecting from WebSocket...');
+          websocketService.disconnect();
+        };
+      }, [isAuthenticated, user?.id, setConnected]);
 
     return <>{children}</>;
 }
