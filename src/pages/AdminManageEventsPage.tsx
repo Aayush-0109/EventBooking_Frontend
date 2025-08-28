@@ -216,10 +216,10 @@ const AdminManageEventsPage: React.FC = () => {
                                 key={event.id}
                                 className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6"
                             >
-                                <div className="flex items-start justify-between">
-                                    <div className="flex-1">
-                                        <div className="flex items-start space-x-4">
-                                            <div className="w-16 h-16 bg-gradient-to-br from-primary-200 to-primary-300 rounded-lg flex items-center justify-center">
+                                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex flex-col sm:flex-row sm:items-start space-y-3 sm:space-y-0 sm:space-x-4">
+                                            <div className="w-16 h-16 bg-gradient-to-br from-primary-200 to-primary-300 rounded-lg flex items-center justify-center flex-shrink-0">
                                                 {event.images && !Array.isArray(event.images) ? (
                                                     <img
                                                         src={event.images}
@@ -230,12 +230,12 @@ const AdminManageEventsPage: React.FC = () => {
                                                     <Calendar className="w-8 h-8 text-primary-600" />
                                                 )}
                                             </div>
-                                            <div className="flex-1">
-                                                <div className="flex items-center space-x-2 mb-2">
-                                                    <h3 className="text-lg font-semibold text-neutral-900">
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+                                                    <h3 className="text-lg font-semibold text-neutral-900 truncate">
                                                         {event.title}
                                                     </h3>
-                                                    <span className={`flex items-center space-x-1 text-sm font-medium ${eventStatus.color}`}>
+                                                    <span className={`flex items-center space-x-1 text-sm font-medium ${eventStatus.color} flex-shrink-0`}>
                                                         {eventStatus.icon}
                                                         <span>{eventStatus.status}</span>
                                                     </span>
@@ -243,10 +243,10 @@ const AdminManageEventsPage: React.FC = () => {
                                                 <p className="text-neutral-600 text-sm mb-3 line-clamp-2">
                                                     {event.description}
                                                 </p>
-                                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm text-neutral-600">
+                                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 text-sm text-neutral-600">
                                                     <div className="flex items-center space-x-2">
-                                                        <Calendar className="w-4 h-4" />
-                                                        <span>
+                                                        <Calendar className="w-4 h-4 flex-shrink-0" />
+                                                        <span className="truncate">
                                                             {new Date(event.date).toLocaleDateString('en-US', {
                                                                 weekday: 'short',
                                                                 year: 'numeric',
@@ -256,11 +256,11 @@ const AdminManageEventsPage: React.FC = () => {
                                                         </span>
                                                     </div>
                                                     <div className="flex items-center space-x-2">
-                                                        <MapPin className="w-4 h-4" />
-                                                        <span>{event.city}, {event.state}</span>
+                                                        <MapPin className="w-4 h-4 flex-shrink-0" />
+                                                        <span className="truncate">{event.city}, {event.state}</span>
                                                     </div>
                                                     <div className="flex items-center space-x-2">
-                                                        <Users className="w-4 h-4" />
+                                                        <Users className="w-4 h-4 flex-shrink-0" />
                                                         <span>{event.registrations || 0} registrations</span>
                                                     </div>
                                                 </div>
@@ -268,7 +268,7 @@ const AdminManageEventsPage: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    <div className="flex space-x-2 ml-4">
+                                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 lg:ml-4 flex-shrink-0">
                                         <Button
                                             size="sm"
                                             variant="outline"

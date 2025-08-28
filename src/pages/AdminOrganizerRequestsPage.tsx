@@ -175,109 +175,114 @@ const AdminReviewRequestsPage: React.FC = () => {
                             key={request.id}
                             className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6"
                         >
-                            <div className="flex items-start justify-between mb-4">
-                                <div className="flex items-center space-x-3">
-                                    <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
-                                        <User className="w-5 h-5 text-primary-600" />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-semibold text-neutral-900">
-                                            {request.user?.name || 'Unknown User'}
-                                        </h3>
-                                        <p className="text-sm text-neutral-600">
-                                            {request.user?.email}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                    <span className={`px-3 py-1 rounded-full text-xs font-medium border ${request.status === 'PENDING' ? 'bg-warning-100 text-warning-700 border-warning-200' :
-                                        request.status === 'ACCEPTED' ? 'bg-success-100 text-success-700 border-success-200' :
-                                            'bg-error-100 text-error-700 border-error-200'
-                                        }`}>
-                                        {request.status === 'PENDING' ? <Clock className="w-4 h-4 text-warning-600" /> :
-                                            request.status === 'ACCEPTED' ? <CheckCircle className="w-4 h-4 text-success-600" /> :
-                                                <XCircle className="w-4 h-4 text-error-600" />}
-                                        <span className="ml-1">{request.status}</span>
-                                    </span>
-                                </div>
-                            </div>
-
-                            {request.overview && (
-                                <div className="mb-4">
-                                    <h4 className="text-sm font-medium text-neutral-700 mb-2">Overview</h4>
-                                    <p className="text-neutral-600 text-sm">{request.overview}</p>
-                                </div>
-                            )}
-
-                            {request.resume && (
-                                <div className="mb-4">
-                                    <h4 className="text-sm font-medium text-neutral-700 mb-2">Resume</h4>
-                                    <div className="flex items-center space-x-3">
-                                        <FileText className="w-5 h-5 text-primary-600" />
-                                        <a
-                                            href={request.resume}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-primary-600 hover:text-primary-700 underline cursor-pointer"
-                                        >
-                                            View Resume
-                                        </a>
-                                        <span className="text-neutral-400">•</span>
-                                        <a
-                                            href={request.resume}
-                                            download
-                                            className="text-sm text-neutral-600 hover:text-neutral-700 underline cursor-pointer"
-                                        >
-                                            Download
-                                        </a>
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-4 text-sm text-neutral-500">
-                                    <div className="flex items-center space-x-1">
-                                        <Calendar className="w-4 h-4" />
-                                        <span>Submitted: {new Date(request.createdAt).toLocaleDateString()}</span>
+                            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-start space-x-3 mb-4">
+                                        <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                            <User className="w-5 h-5 text-primary-600" />
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <h3 className="font-semibold text-neutral-900 truncate">
+                                                {request.user?.name || 'Unknown User'}
+                                            </h3>
+                                            <p className="text-sm text-neutral-600 truncate">
+                                                {request.user?.email}
+                                            </p>
+                                        </div>
                                     </div>
 
+                                    {request.overview && (
+                                        <div className="mb-4">
+                                            <h4 className="text-sm font-medium text-neutral-700 mb-2">Overview</h4>
+                                            <p className="text-neutral-600 text-sm">{request.overview}</p>
+                                        </div>
+                                    )}
+
+                                    {request.resume && (
+                                        <div className="mb-4">
+                                            <h4 className="text-sm font-medium text-neutral-700 mb-2">Resume</h4>
+                                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                                                <FileText className="w-5 h-5 text-primary-600 flex-shrink-0" />
+                                                <a
+                                                    href={request.resume}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-primary-600 hover:text-primary-700 underline cursor-pointer"
+                                                >
+                                                    View Resume
+                                                </a>
+                                                <span className="text-neutral-400 hidden sm:inline">•</span>
+                                                <a
+                                                    href={request.resume}
+                                                    download
+                                                    className="text-sm text-neutral-600 hover:text-neutral-700 underline cursor-pointer"
+                                                >
+                                                    Download
+                                                </a>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="flex items-center space-x-4 text-sm text-neutral-500">
+                                        <div className="flex items-center space-x-1">
+                                            <Calendar className="w-4 h-4 flex-shrink-0" />
+                                            <span>Submitted: {new Date(request.createdAt).toLocaleDateString()}</span>
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <div className="flex space-x-2">
-                                    {request.status === 'PENDING' && (
-                                        <>
+                                <div className="flex flex-col items-start lg:items-end gap-3 lg:gap-4">
+                                    <div className="flex items-center space-x-2">
+                                        <span className={`px-3 py-1 rounded-full text-xs font-medium border ${request.status === 'PENDING' ? 'bg-warning-100 text-warning-700 border-warning-200' :
+                                            request.status === 'ACCEPTED' ? 'bg-success-100 text-success-700 border-success-200' :
+                                                'bg-error-100 text-error-700 border-error-200'
+                                            }`}>
+                                            {request.status === 'PENDING' ? <Clock className="w-4 h-4 text-warning-600" /> :
+                                                request.status === 'ACCEPTED' ? <CheckCircle className="w-4 h-4 text-success-600" /> :
+                                                    <XCircle className="w-4 h-4 text-error-600" />}
+                                            <span className="ml-1">{request.status}</span>
+                                        </span>
+                                    </div>
+
+                                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full lg:w-auto">
+                                        {request.status === 'PENDING' && (
+                                            <>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() => handleStatusUpdate(request.id, 'ACCEPTED')}
+                                                    disabled={isMutating}
+                                                    loading={isMutating}
+                                                    className="w-full sm:w-auto"
+                                                >
+                                                    <CheckCircle className="w-4 h-4 mr-1" />
+                                                    Accept
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="danger"
+                                                    onClick={() => handleStatusUpdate(request.id, 'REJECTED')}
+                                                    disabled={isMutating}
+                                                    loading={isMutating}
+                                                    className="w-full sm:w-auto"
+                                                >
+                                                    <XCircle className="w-4 h-4 mr-1" />
+                                                    Reject
+                                                </Button>
+                                            </>
+                                        )}
+                                        {request.status !== 'PENDING' && (
                                             <Button
                                                 size="sm"
-                                                variant="outline"
-                                                onClick={() => handleStatusUpdate(request.id, 'ACCEPTED')}
+                                                variant="ghost"
+                                                onClick={() => handleStatusUpdate(request.id, 'PENDING')}
                                                 disabled={isMutating}
-                                                loading={isMutating}
+                                                className="w-full sm:w-auto"
                                             >
-                                                <CheckCircle className="w-4 h-4 mr-1" />
-                                                Accept
+                                                Reset to Pending
                                             </Button>
-                                            <Button
-                                                size="sm"
-                                                variant="danger"
-                                                onClick={() => handleStatusUpdate(request.id, 'REJECTED')}
-                                                disabled={isMutating}
-                                                loading={isMutating}
-                                            >
-                                                <XCircle className="w-4 h-4 mr-1" />
-                                                Reject
-                                            </Button>
-                                        </>
-                                    )}
-                                    {request.status !== 'PENDING' && (
-                                        <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            onClick={() => handleStatusUpdate(request.id, 'PENDING')}
-                                            disabled={isMutating}
-                                        >
-                                            Reset to Pending
-                                        </Button>
-                                    )}
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>

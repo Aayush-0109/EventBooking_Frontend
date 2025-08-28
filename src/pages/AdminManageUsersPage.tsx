@@ -126,7 +126,7 @@ const AdminManageUsersPage: React.FC = () => {
     };
 
     const handleDeleteUser = async (userId: number, userName: string) => {
-        
+
         if (currentUser?.id === userId) {
             message.error('You cannot delete your own account');
             return;
@@ -159,7 +159,7 @@ const AdminManageUsersPage: React.FC = () => {
     return (
         <Container>
             <div className="py-8">
-                {}
+                { }
                 <div className="mb-8">
                     <div className="flex items-center gap-4 mb-4">
                         <Button
@@ -175,7 +175,7 @@ const AdminManageUsersPage: React.FC = () => {
                     <p className="text-neutral-600">View and manage all platform users</p>
                 </div>
 
-                {}
+                { }
                 <div className="mb-6 space-y-4">
                     <div className="flex flex-col sm:flex-row gap-4">
                         <div className="flex-1">
@@ -221,14 +221,14 @@ const AdminManageUsersPage: React.FC = () => {
                     </div>
                 </div>
 
-                {}
+                { }
                 {error && (
                     <div className="mb-6 rounded-md border border-error-200 bg-error-50 p-4 text-error-700">
                         <div className="flex items-center justify-between">
                             <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => fetchUsers(createQuery())} 
+                                onClick={() => fetchUsers(createQuery())}
                             >
                                 Retry
                             </Button>
@@ -236,16 +236,16 @@ const AdminManageUsersPage: React.FC = () => {
                     </div>
                 )}
 
-                {}
+                { }
                 <div className="space-y-4">
                     {users.map((user) => (
                         <div
                             key={user.id}
                             className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6"
                         >
-                            <div className="flex items-center justify-between">
+                            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                                 <div className="flex items-center space-x-4">
-                                    <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
+                                    <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
                                         {user.profileImage ? (
                                             <img
                                                 src={user.profileImage}
@@ -256,11 +256,11 @@ const AdminManageUsersPage: React.FC = () => {
                                             <User className="w-6 h-6 text-primary-600" />
                                         )}
                                     </div>
-                                    <div>
-                                        <h3 className="font-semibold text-neutral-900">{user.name}</h3>
+                                    <div className="min-w-0 flex-1">
+                                        <h3 className="font-semibold text-neutral-900 truncate">{user.name}</h3>
                                         <div className="flex items-center space-x-2 text-sm text-neutral-600">
-                                            <Mail className="w-4 h-4" />
-                                            <span>{user.email}</span>
+                                            <Mail className="w-4 h-4 flex-shrink-0" />
+                                            <span className="truncate">{user.email}</span>
                                         </div>
                                         <div className="flex items-center space-x-2 mt-1">
                                             {getRoleIcon(user.role)}
@@ -271,20 +271,20 @@ const AdminManageUsersPage: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center space-x-4">
-                                    <div className="text-sm text-neutral-500">
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 lg:gap-4">
+                                    <div className="text-sm text-neutral-500 space-y-1">
                                         <div className="flex items-center space-x-1">
-                                            <Calendar className="w-4 h-4" />
+                                            <Calendar className="w-4 h-4 flex-shrink-0" />
                                             <span>Joined: {new Date(user.createdAt).toLocaleDateString()}</span>
                                         </div>
-                                        <div className="flex items-center space-x-2 mt-1 text-xs">
+                                        <div className="flex items-center space-x-2 text-xs">
                                             <span>Events: {user.eventsCount || 0}</span>
                                             <span>•</span>
                                             <span>Registrations: {user.registrationsCount || 0}</span>
                                         </div>
                                     </div>
 
-                                    <div className="flex space-x-2">
+                                    <div className="flex-shrink-0">
                                         <Button
                                             size="sm"
                                             variant="danger"
@@ -302,7 +302,7 @@ const AdminManageUsersPage: React.FC = () => {
                     ))}
                 </div>
 
-                {}
+                { }
                 {users.length === 0 && !isLoading && (
                     <div className="text-center py-12">
                         <Users className="w-12 h-12 text-neutral-400 mx-auto mb-4" />
@@ -318,14 +318,14 @@ const AdminManageUsersPage: React.FC = () => {
 
                 {pagination.totalPages > 1 && (
                     <div className="flex items-center justify-between border-t border-neutral-200 pt-6 mt-6">
-                        {}
+                        { }
                         <div className="text-sm text-neutral-700">
                             Page {pagination.currentPage} of {pagination.totalPages} • {pagination.totalItems} total users
                         </div>
 
-                        {}
+                        { }
                         <div className="flex items-center space-x-2">
-                            {}
+                            { }
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -336,7 +336,7 @@ const AdminManageUsersPage: React.FC = () => {
                                 Previous
                             </Button>
 
-                            {}
+                            { }
                             <div className="hidden sm:flex space-x-1">
                                 {getPageNumbers().map((pageNum) => (
                                     <Button
@@ -352,12 +352,12 @@ const AdminManageUsersPage: React.FC = () => {
                                 ))}
                             </div>
 
-                            {}
+                            { }
                             <div className="sm:hidden text-sm text-neutral-600">
                                 {pagination.currentPage} / {pagination.totalPages}
                             </div>
 
-                            {}
+                            { }
                             <Button
                                 variant="outline"
                                 size="sm"
