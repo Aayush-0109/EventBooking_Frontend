@@ -1,8 +1,18 @@
-import L from 'leaflet'
+import L  from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
+import markerIcon from 'leaflet/dist/images/marker-icon.png'
+import markerShadow from 'leaflet/dist/images/marker-shadow.png'
 import { Search } from 'lucide-react';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { geocodingService, AddressData } from '../../services/geocodingService';
+
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+});
 
 interface LocationMapProps {
     className?: string;
@@ -61,6 +71,13 @@ export const LocationMap: React.FC<LocationMapProps> = ({ className = "h-96 w-fu
 
     useEffect(() => {
         if (!mapRef.current) return;
+         
+        // L.Icon.Default.mergeOptions({
+        //     iconRetinaUrl : markerIcon2x,
+        //     iconUrl : markerIcon,
+        //     shadowUrl : markerShadow
+        // })
+
         const map = L.map(mapRef.current).setView([coords.lat, coords.lng], 13)
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
