@@ -34,7 +34,7 @@ export const RegisterPage: React.FC = () => {
     const { registerUser, error, clearError, isMutating, user, isAuthenticated, sendOtp, verifyOtp, isOtpSending, isOtpVerifying } = useAuthStore()
 
     
-    const [isEmailVerified, setIsEmailVerified] = useState(false);
+    const [isEmailVerified, setIsEmailVerified] = useState(true);
     const [showOtpModal, setShowOtpModal] = useState(false);
     const [otp, setOtp] = useState('');
     const [canResendOtp, setCanResendOtp] = useState(true);
@@ -88,9 +88,9 @@ export const RegisterPage: React.FC = () => {
 
     useEffect(() => {
         if (isEmailVerified) {
-            setIsEmailVerified(false);
+            setIsEmailVerified(true);
         }
-    }, [email]);
+    }, []);
 
     useEffect(() => {
         if (confirmPassword && password) {
@@ -263,6 +263,9 @@ export const RegisterPage: React.FC = () => {
                         </h2>
                         <p className="text-neutral-600">
                             Join us to discover and book amazing events
+                        </p>
+                        <p className="text-error">
+                        Email service is temporarily disabled for deployement on render
                         </p>
                     </div>
 
