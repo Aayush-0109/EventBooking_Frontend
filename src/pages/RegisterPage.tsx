@@ -34,7 +34,7 @@ export const RegisterPage: React.FC = () => {
     const { registerUser, error, clearError, isMutating, user, isAuthenticated, sendOtp, verifyOtp, isOtpSending, isOtpVerifying } = useAuthStore()
 
     
-    const [isEmailVerified, setIsEmailVerified] = useState(true);
+    const [isEmailVerified, setIsEmailVerified] = useState(false);
     const [showOtpModal, setShowOtpModal] = useState(false);
     const [otp, setOtp] = useState('');
     const [canResendOtp, setCanResendOtp] = useState(true);
@@ -87,10 +87,9 @@ export const RegisterPage: React.FC = () => {
 
 
     useEffect(() => {
-        if (isEmailVerified) {
-            setIsEmailVerified(true);
-        }
-    }, []);
+        // If the user edits the email after verifying, require re-verification.
+        setIsEmailVerified(false);
+    }, [email]);
 
     useEffect(() => {
         if (confirmPassword && password) {
@@ -112,8 +111,7 @@ export const RegisterPage: React.FC = () => {
 
     useEffect(() => {
         if (isAuthenticated && user) {
-            message.success(`Welcome to EventBooking, ${user.name}! 🎉`);
-            navigate('/');
+            navigate('/', { replace: true });
         }
     }, [isAuthenticated, user, navigate])
 
@@ -264,8 +262,8 @@ export const RegisterPage: React.FC = () => {
                         <p className="text-neutral-600">
                             Join us to discover and book amazing events
                         </p>
-                        <p className="text-error">
-                        Email service is temporarily disabled for deployement on render
+                        <p className="text-sm text-neutral-500 mt-2">
+                            Verify your email via OTP before registering.
                         </p>
                     </div>
 

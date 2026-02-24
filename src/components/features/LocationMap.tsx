@@ -27,6 +27,7 @@ export const LocationMap: React.FC<LocationMapProps> = ({ className = "h-96 w-fu
     const mapInstanceRef = useRef<L.Map | null>(null)
     const markerRef = useRef<L.Marker | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const updateCoordinatesRef = useRef<(lat: number, lng: number) => void>(() => { });
 
     const handleReverseGeocoding = useCallback(async (lat: number, lng: number) => {
         const addressData = await geocodingService.reverseGeocode(lat, lng);
@@ -68,47 +69,55 @@ export const LocationMap: React.FC<LocationMapProps> = ({ className = "h-96 w-fu
         handleReverseGeocoding(lat, lng);
     }, [onLocationSelect, handleReverseGeocoding]);
 
+    useEffect(() => {
+        updateCoordinatesRef.current = updateCoordinates;
+    }, [updateCoordinates]);
 
+    // Create Leaflet map only once (prevents expensive re-init on any parent re-render).
     useEffect(() => {
         if (!mapRef.current) return;
-         
-        // L.Icon.Default.mergeOptions({
-        //     iconRetinaUrl : markerIcon2x,
-        //     iconUrl : markerIcon,
-        //     shadowUrl : markerShadow
-        // })
+        if (mapInstanceRef.current) return;
 
-        const map = L.map(mapRef.current).setView([coords.lat, coords.lng], 13)
+        const map = L.map(mapRef.current).setView([coords.lat, coords.lng], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
         mapInstanceRef.current = map;
 
-
-
-
-        const marker = L.marker([coords.lat, coords.lng], {
-            draggable: true
-        }).addTo(map);
+        const marker = L.marker([coords.lat, coords.lng], { draggable: true }).addTo(map);
         markerRef.current = marker;
-
 
         marker.on('dragend', (e) => {
             const { lat, lng } = e.target.getLatLng();
-            updateCoordinates(lat, lng);
+            updateCoordinatesRef.current(lat, lng);
         });
+
         map.on('click', (e) => {
             const { lat, lng } = e.latlng;
             marker.setLatLng([lat, lng]);
-            updateCoordinates(lat, lng);
-        })
-
+            updateCoordinatesRef.current(lat, lng);
+        });
 
         return () => {
             map.remove();
             mapInstanceRef.current = null;
+            markerRef.current = null;
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // When coordinates change, just update marker/view instead of re-creating the map.
+    useEffect(() => {
+        const map = mapInstanceRef.current;
+        const marker = markerRef.current;
+        if (!map || !marker) return;
+
+        const current = marker.getLatLng();
+        if (current.lat !== coords.lat || current.lng !== coords.lng) {
+            marker.setLatLng([coords.lat, coords.lng]);
+            map.setView([coords.lat, coords.lng], map.getZoom(), { animate: false });
         }
-    }, [coords.lat, coords.lng, updateCoordinates]);
+    }, [coords.lat, coords.lng]);
 
 
 

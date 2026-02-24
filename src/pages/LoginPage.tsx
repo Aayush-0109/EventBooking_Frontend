@@ -57,10 +57,21 @@ export const LoginPage: React.FC = () => {
     useEffect(() => {
         if (isAuthenticated && user ) {
             
-            message.success(`Welcome back, ${user.name}!`);
-            navigate(location.state?.from ||'/');
+            message.open({
+                type: 'success',
+                content: `Welcome back, ${user.name}!`,
+                key: 'login-success',
+            });
+
+            const from = (location.state as any)?.from;
+            const safeRedirect =
+                typeof from === 'string' && from !== '/login' && from !== '/register'
+                    ? from
+                    : '/';
+
+            navigate(safeRedirect, { replace: true });
         }
-    }, [isAuthenticated, user, navigate]);
+    }, [isAuthenticated, user, navigate, location.state]);
 
 
 
